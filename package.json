@@ -4,10 +4,10 @@
     "@lejeunerenard/autobase-manager": "../../p2p/autobase-manager",
     "autobase": "latest",
     "corestore": "next",
-    "hyperbee": "latest",
+    "hyperbee": "^1.6.3",
     "hyperswarm": "next",
-    "lexicographic-integer": "latest",
+    "lexicographic-integer": "^1.1.0",
     "minimist": "^1.2.5",
-    "random-access-memory": "latest"
+    "random-access-memory": "^3.1.2"
   }
 }
