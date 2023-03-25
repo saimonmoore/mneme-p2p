@@ -11,7 +11,7 @@ import { AutobaseManager } from '@lejeunerenard/autobase-manager'
 const args = minimist(process.argv, {
   alias: {
     storage: 's',
-    email: "e",
+    email: 'e',
   },
   default: {
     swarm: true
@@ -19,7 +19,7 @@ const args = minimist(process.argv, {
   boolean: ['ram', 'swarm']
 })
 
-const SWARM_TOPIC = "org.saimonmoore.mneme.swarm";
+const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
 
 class Mneme {
   constructor () {
@@ -27,11 +27,11 @@ class Mneme {
     this.swarm = null
     this.autobase = null
     this.bee = null
-    this.loggedIn = null;
+    this.loggedIn = null
   }
 
   loggedIn() {
-    return this.loggedIn;
+    return this.loggedIn
   }
 
   async start () {
@@ -58,7 +58,7 @@ class Mneme {
     await manager.ready()
 
     if (args.swarm) {
-      const topic = Buffer.from(sha256(SWARM_TOPIC), "hex");
+      const topic = Buffer.from(sha256(SWARM_TOPIC), "hex")
       this.swarm = new Hyperswarm()
       this.swarm.on('connection', (socket, peerInfo) => {
         console.log('info: Peer connected! ======> ', peerInfo.publicKey.toString('hex'));
@@ -130,13 +130,13 @@ class Mneme {
     console.log()
   }
 
-  async * all () {
+  async * posts () {
     for await (const data of this.bee.createReadStream({ gt: 'posts!', lt: 'posts!~' })) {
       yield data.value
     }
   }
 
-  async * top () {
+  async * topPosts () {
     for await (const data of this.bee.createReadStream({ gt: 'top!', lt: 'top!~', reverse: true })) {
       const { value } = (await this.bee.get('posts!' + data.value))
       yield value
@@ -179,28 +179,28 @@ class Mneme {
   }
 
   async login(email) {
-    const hash = sha256(email);
+    const hash = sha256(email)
 
-    console.debug(`Logging in as ${email} (${hash}) `);
-    await this.autobase.view.update();
-    const value = await this.autobase.view.get("users!" + hash);
-    console.debug("got user: ", { value });
+    console.debug(`Logging in as ${email} (${hash}) `)
+    await this.autobase.view.update()
+    const value = await this.autobase.view.get("users!" + hash)
+    console.debug("got user: ", { value })
 
     if (value) {
-      this.loggedIn = true;
-      console.log(`Already logged in as ${email} (${value}) `);
-      return;
+      this.loggedIn = true
+      console.log(`Already logged in as ${email} (${value}) `)
+      return
     }
 
     await this.autobase.append(
       JSON.stringify({
-        type: "createUser",
+        type: 'createUser',
         data: { email },
         hash,
       })
-    );
+    )
 
-    console.log('Logged in as "' + email + '"');
+    console.log('Logged in as "' + email + '"')
   }
 }
 
