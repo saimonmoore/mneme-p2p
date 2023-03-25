@@ -172,6 +172,31 @@ class Mneme {
       up: false
     }))
   }
+
+  async login(email) {
+    const hash = sha256(email);
+
+    console.debug(`Logging in as ${email} (${hash}) `);
+    await this.autobase.view.update();
+    const value = await this.autobase.view.get("users!" + hash);
+    console.debug("got user: ", { value });
+
+    if (value) {
+      this.loggedIn = true;
+      console.log(`Already logged in as ${email} (${value}) `);
+      return;
+    }
+
+    await this.autobase.append(
+      JSON.stringify({
+        type: "createUser",
+        data: { email },
+        hash,
+      })
+    );
+
+    console.log('Logged in as "' + email + '"');
+  }
 }
 
 export const mneme = new Mneme()
