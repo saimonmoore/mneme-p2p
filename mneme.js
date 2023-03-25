@@ -10,10 +10,7 @@ import { AutobaseManager } from '@lejeunerenard/autobase-manager'
 
 const args = minimist(process.argv, {
   alias: {
-    writers: 'w',
-    indexes: 'i',
     storage: 's',
-    name: 'n'
   },
   default: {
     swarm: true
@@ -21,13 +18,14 @@ const args = minimist(process.argv, {
   boolean: ['ram', 'swarm']
 })
 
-class Hypernews {
+const SWARM_TOPIC = "org.saimonmoore.mneme.swarm";
+
+class Mneme {
   constructor () {
-    this.store = new Corestore(args.ram ? ram : (args.storage || 'hypernews'))
+    this.store = new Corestore(args.ram ? ram : (args.storage || 'mneme'))
     this.swarm = null
     this.autobase = null
     this.bee = null
-    this.name = null
   }
 
   async start () {
@@ -36,21 +34,12 @@ class Hypernews {
 
     await writer.ready()
 
-    this.name = args.name || writer.key.slice(0, 8).toString('hex')
     this.autobase = new Autobase({ 
       inputs: [writer], 
       localInput: writer, 
       outputs: [viewOutput], 
       localOutput: viewOutput
     })
-
-    for (const w of [].concat(args.writers || [])) {
-      await this.autobase.addInput(this.store.get(Buffer.from(w, 'hex')))
-    }
-
-    for (const i of [].concat(args.indexes || [])) {
-      await this.autobase.addOutput(this.store.get(Buffer.from(i, 'hex')))
-    }
 
     await this.autobase.ready()
 
@@ -63,7 +52,7 @@ class Hypernews {
     await manager.ready()
 
     if (args.swarm) {
-      const topic = Buffer.from(sha256(this.name), 'hex')
+      const topic = Buffer.from(sha256(SWARM_TOPIC), "hex");
       this.swarm = new Hyperswarm()
       this.swarm.on('connection', (socket, peerInfo) => {
         console.log('info: Peer connected! ======> ', peerInfo.publicKey.toString('hex'));
@@ -118,13 +107,7 @@ class Hypernews {
   }
 
   info () {
-    console.log('Autobase setup. Pass this to run this same setup in another instance:')
-    console.log()
-    console.log('hrepl hypernews.js ' +
-      '-n ' + this.name + ' ' +
-      this.autobase.inputs.map(i => '-w ' + i.key.toString('hex')).join(' ') + ' ' +
-      this.autobase.outputs.map(i => '-i ' + i.key.toString('hex')).join(' ')
-    )
+    console.log('hrepl mneme.js ');
     console.log()
     console.log('To use another storage directory use --storage ./another')
     console.log('To disable swarming add --no-swarm')
@@ -172,9 +155,9 @@ class Hypernews {
   }
 }
 
-export const hypernews = new Hypernews()
+export const mneme = new Mneme()
 
-await hypernews.start()
+await mneme.start()
 
 function sha256 (inp) {
   return crypto.createHash('sha256').update(inp).digest('hex')
