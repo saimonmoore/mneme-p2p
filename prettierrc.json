@@ -1,4 +1,4 @@
-module.exports = {
+{
   /**
    * Print Width
    * https://prettier.io/docs/en/options.html#print-width
@@ -8,7 +8,7 @@ module.exports = {
    * printWidth: <int>
    * default: 80
    */
-  printWidth: 80,
+  "printWidth": 80,
 
   /**
    * Tab Width
@@ -19,7 +19,7 @@ module.exports = {
    * tabWidth: <int>
    * default: 2
    */
-  tabWidth: 2,
+  "tabWidth": 2,
 
   /**
    * Tabs
@@ -30,7 +30,7 @@ module.exports = {
    * useTabs: <bool>
    * default: false
    */
-  useTabs: false,
+  "useTabs": false,
 
   /**
    * Semicolons
@@ -41,7 +41,7 @@ module.exports = {
    * semi: <bool>
    * default: true
    */
-  semi: true,
+  "semi": true,
 
   /**
    * Quotes
@@ -52,7 +52,7 @@ module.exports = {
    * singleQuote: <bool>
    * default: false
    */
-  singleQuote: true,
+  "singleQuote": true,
 
   /**
    * Quote Props
@@ -63,7 +63,7 @@ module.exports = {
    * quoteProps: "<as-needed|consistent|preserve>"
    * default: "as-needed"
    */
-  quoteProps: 'as-needed',
+  "quoteProps": "as-needed",
 
   /**
    * JSX Quotes
@@ -74,29 +74,29 @@ module.exports = {
    * jsxSingleQuote: <bool>
    * default: false
    */
-  jsxSingleQuote: false,
+  "jsxSingleQuote": false,
 
   /**
-  * Trailing Commas
-  * https://prettier.io/docs/en/options.html#trailing-commas
-  *
-  * Print trailing commas wherever possible when multi-line. (A single-line array, for example, never gets trailing commas.)
-  *
-  * trailingComma: "<es5|none|all>"
-  * default: 'es5'
-  */
-  trailingComma: 'es5',
+   * Trailing Commas
+   * https://prettier.io/docs/en/options.html#trailing-commas
+   *
+   * Print trailing commas wherever possible when multi-line. (A single-line array, for example, never gets trailing commas.)
+   *
+   * trailingComma: "<es5|none|all>"
+   * default: 'es5'
+   */
+  "trailingComma": "es5",
 
   /**
-  * Bracket Spacing
-  * https://prettier.io/docs/en/options.html#bracket-spacing
-  *
-  * Print spaces between brackets in object literals.
-  *
-  * bracketSpacing: <bool>
-  * default: true
-  */
-  bracketSpacing: true,
+   * Bracket Spacing
+   * https://prettier.io/docs/en/options.html#bracket-spacing
+   *
+   * Print spaces between brackets in object literals.
+   *
+   * bracketSpacing: <bool>
+   * default: true
+   */
+  "bracketSpacing": true,
 
   /**
    * Bracket Line
@@ -130,7 +130,7 @@ module.exports = {
    * arrowParens: "<always|avoid>"
    * default: "always"
    */
-  arrowParens: 'always',
+  "arrowParens": "always"
 
   /**
    * Range
@@ -235,7 +235,7 @@ module.exports = {
    * default: "lf"
    */
   // endOfLine: 'lf',
-  
+
   /**
    * Embedded Language Formatting
    * https://prettier.io/docs/en/options.html#embedded-language-formatting
@@ -246,7 +246,7 @@ module.exports = {
    * default: "auto"
    */
   // embeddedLanguageFormatting: 'auto',
-  
+
   /**
    * Single Attribute Per Line
    * https://prettier.io/docs/en/options.html#single-attribute-per-line
@@ -257,4 +257,4 @@ module.exports = {
    * default: "false"
    */
   // singleAttributePerLine: 'false',
-};
+}
