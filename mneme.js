@@ -138,6 +138,14 @@ class Mneme {
     }
   }
 
+  async * users() {
+    for await (const data of this.bee.createReadStream({
+      gt: "users!",
+      lt: "users!~",
+    })) {
+      yield data.value;
+    }
+  }
 
   async post (text) {
     const hash = sha256(text)
