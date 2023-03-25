@@ -11,6 +11,7 @@ import { AutobaseManager } from '@lejeunerenard/autobase-manager'
 const args = minimist(process.argv, {
   alias: {
     storage: 's',
+    email: "e",
   },
   default: {
     swarm: true
@@ -75,6 +76,16 @@ class Mneme {
 
         for (const { value } of batch) {
           const op = JSON.parse(value)
+
+          if (op.type === "createUser") {
+            const { hash, data } = op;
+            console.debug("[apply] ===========> CREATE_USER: ", { hash, data });
+            await b.put("users!" + hash, { hash, data });
+            console.debug("[apply] ===========> CREATED_USER! ", {
+              hash,
+              data,
+            });
+          }
 
           if (op.type === 'post') {
             const hash = sha256(op.data)
