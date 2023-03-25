@@ -1,3 +1,5 @@
+import { POSTS_KEY, TOP_POSTS_KEY } from '../../indices/Posts/posts.index.js';
+
 class PostUseCase {
   constructor(bee, autobase) {
     this.bee = bee;
@@ -6,8 +8,8 @@ class PostUseCase {
 
   async *posts() {
     for await (const data of this.bee.createReadStream({
-      gt: 'posts!',
-      lt: 'posts!~',
+      gt: POSTS_KEY,
+      lt: `${POSTS_KEY}~`
     })) {
       yield data.value;
     }
@@ -15,11 +17,11 @@ class PostUseCase {
 
   async *topPosts() {
     for await (const data of this.bee.createReadStream({
-      gt: 'top!',
-      lt: 'top!~',
+      gt: TOP_POSTS_KEY,
+      lt: `${TOP_POSTS_KEY}~`,
       reverse: true,
     })) {
-      const { value } = await this.bee.get('posts!' + data.value);
+      const { value } = await this.bee.get(POSTS_KEY + data.value);
       yield value;
     }
   }

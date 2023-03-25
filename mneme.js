@@ -13,6 +13,9 @@ import { PostUseCase } from './modules/Post/application/usecases/PostUseCase/ind
 import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
 import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
+import { indexUsers } from './modules/User/application/indices/Users/users.index.js';
+import { indexPosts, indexPostVotes } from './modules/Post/application/indices/Posts/posts.index.js';
+
 // TODO:
 // - cleanup code
 // - add tests
@@ -32,6 +35,12 @@ const args = minimist(process.argv, {
 });
 
 const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
+
+const OPERATIONS = {
+  CREATE_USER: 'createUser',
+  POST: 'post',
+  VOTE: 'vote',
+}
 
 class Mneme {
   constructor() {
@@ -87,44 +96,25 @@ class Mneme {
     this.autobase.start({
       unwrap: true,
       async apply(batch) {
-        const b = self.bee.batch({ update: false });
+        const batchedBeeOperations = self.bee.batch({ update: false });
 
         for (const { value } of batch) {
-          const op = JSON.parse(value);
+          const operation = JSON.parse(value);
 
-          if (op.type === 'createUser') {
-            const { hash, data } = op;
-            await b.put('users!' + hash, { hash, data });
+          if (operation.type === OPERATIONS.CREATE_USER) {
+            await indexUsers(batchedBeeOperations, operation);
           }
 
-          if (op.type === 'post') {
-            const hash = sha256(op.data);
-            await b.put('posts!' + hash, { hash, votes: 0, data: op.data });
-            await b.put(
-              'top!' + lexint.pack(0, 'hex') + '!' + op.hash,
-              op.hash
-            );
+          if (operation.type === OPERATIONS.POST) {
+            await indexPosts(batchedBeeOperations, operation);
           }
 
-          if (op.type === 'vote') {
-            const inc = op.up ? 1 : -1;
-            const p = await self.bee.get('posts!' + op.hash, { update: false });
-
-            if (!p) continue;
-
-            await b.del(
-              'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash
-            );
-            p.value.votes += inc;
-            await b.put('posts!' + op.hash, p.value);
-            await b.put(
-              'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash,
-              op.hash
-            );
+          if (operation.type === OPERATIONS.VOTE) {
+            await indexPostVotes(batchedBeeOperations, operation, self.bee);
           }
         }
 
-        await b.flush();
+        await batchedBeeOperations.flush();
       },
     });
 
@@ -151,6 +141,8 @@ class Mneme {
     console.log('To disable swarming add --no-swarm');
     console.log();
   }
+
+  // ENDPOINTS
 
   // Post
   async *posts() {
