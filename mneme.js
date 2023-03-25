@@ -12,6 +12,13 @@ function sha256(inp) {
   return crypto.createHash('sha256').update(inp).digest('hex');
 }
 
+// TODO:
+// - cleanup code
+// - add tests
+// - check if user logged in before posting
+// - separate into modules (user, posts, voting, etc)
+// - start implementing actual mneme features (See: https://excalidraw.com/#room=c4d4d9c1ba6caaa086b8,3H6dTYLLfzyFDLwIz0irmA)
+
 const args = minimist(process.argv, {
   alias: {
     storage: 's',
@@ -25,17 +32,160 @@ const args = minimist(process.argv, {
 
 const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
 
+class UserUseCase {
+  constructor(bee, autobase, sessionUseCase) {
+    this.bee = bee;
+    this.autobase = autobase;
+    this.sessionUseCase = sessionUseCase;
+  }
+
+  async *users() {
+    for await (const data of this.bee.createReadStream({
+      gt: 'users!',
+      lt: 'users!~',
+    })) {
+      yield data.value;
+    }
+  }
+
+  async signup(email) {
+    const hash = sha256(email);
+
+    console.debug(`Signing up with: ${email}`);
+
+    const value = await this.bee.get('users!' + hash);
+
+    if (value) {
+      console.log(`User already exists with "${email}".`);
+      return;
+    }
+
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'createUser',
+        data: { email },
+        hash,
+      })
+    );
+
+    this.sessionUseCase.directLogin(email);
+
+    console.log(`Created user for "${email}".`);
+  }
+}
+
+class SessionUseCase {
+  constructor(bee, autobase) {
+    this.bee = bee;
+    this.autobase = autobase;
+    this.loggedIn = false;
+  }
+
+  isLoggedIn() {
+    return !!this.loggedIn;
+  }
+
+  directLogin(email) {
+    this.loggedIn = true;
+    console.log('Logged in as "' + email + '"');
+  }
+
+  async login(email) {
+    const hash = sha256(email);
+
+    if (this.isLoggedIn()) {
+      console.log(`Already logged in as ${email}`);
+      return;
+    }
+
+    const value = await this.bee.get('users!' + hash);
+
+    if (!value) {
+      console.log(`Please sign up! No user found for "${email}".`);
+      return;
+    }
+
+    this.loggedIn = true;
+    console.log('Logged in as "' + email + '"');
+  }
+
+  logout() {
+    this.loggedIn = false;
+    console.log('Logged out');
+  }
+}
+
+class PostUseCase {
+  constructor(bee, autobase) {
+    this.bee = bee;
+    this.autobase = autobase;
+  }
+
+  async *posts() {
+    for await (const data of this.bee.createReadStream({
+      gt: 'posts!',
+      lt: 'posts!~',
+    })) {
+      yield data.value;
+    }
+  }
+
+  async *topPosts() {
+    for await (const data of this.bee.createReadStream({
+      gt: 'top!',
+      lt: 'top!~',
+      reverse: true,
+    })) {
+      const { value } = await this.bee.get('posts!' + data.value);
+      yield value;
+    }
+  }
+
+  async post(data) {
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'post',
+        data,
+      })
+    );
+
+    console.log('Posted: ' + data);
+  }
+}
+
+class VoteUseCase {
+  constructor(bee, autobase) {
+    this.bee = bee;
+    this.autobase = autobase;
+  }
+
+  async upvote(hash) {
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'vote',
+        hash,
+        up: true,
+      })
+    );
+  }
+
+  async downvote(hash) {
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'vote',
+        hash,
+        up: false,
+      })
+    );
+  }
+}
+
 class Mneme {
   constructor() {
     this.store = new Corestore(args.ram ? ram : args.storage || 'mneme');
     this.swarm = null;
     this.autobase = null;
     this.bee = null;
-    this.loggedIn = false;
-  }
-
-  isLoggedIn() {
-    return !!this.loggedIn;
   }
 
   async start() {
@@ -130,6 +280,15 @@ class Mneme {
       keyEncoding: 'utf-8',
       valueEncoding: 'json',
     });
+
+    this.sessionUseCase = new SessionUseCase(this.bee, this.autobase);
+    this.userUserCase = new UserUseCase(
+      this.bee,
+      this.autobase,
+      this.sessionUseCase
+    );
+    this.postUseCase = new PostUseCase(this.bee, this.autobase);
+    this.upvoteUseCase = new VoteUseCase(this.bee, this.autobase);
   }
 
   info() {
@@ -140,114 +299,48 @@ class Mneme {
     console.log();
   }
 
+  // Post
   async *posts() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'posts!',
-      lt: 'posts!~',
-    })) {
-      yield data.value;
-    }
+    yield* this.postUseCase.posts();
   }
 
   async *topPosts() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'top!',
-      lt: 'top!~',
-      reverse: true,
-    })) {
-      const { value } = await this.bee.get('posts!' + data.value);
-      yield value;
-    }
-  }
-
-  async *users() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'users!',
-      lt: 'users!~',
-    })) {
-      yield data.value;
-    }
+    yield* this.postUseCase.topPosts();
   }
 
   async post(text) {
-    const hash = sha256(text);
-
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'post',
-        hash,
-        data: text,
-      })
-    );
+    return this.postUseCase.post(text);
   }
 
+  // Vote
   async upvote(hash) {
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'vote',
-        hash,
-        up: true,
-      })
-    );
+    return this.upvoteUseCase.upvote(hash);
   }
 
   async downvote(hash) {
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'vote',
-        hash,
-        up: false,
-      })
-    );
+    return this.upvoteUseCase.downvote(hash);
+  }
+
+  // User
+  async *users() {
+    yield* this.userUserCase.users();
   }
 
   async signup(email) {
-    const hash = sha256(email);
+    return this.userUserCase.signup(email);
+  }
 
-    console.debug(`Signing up with: ${email}`);
-
-    const value = await this.bee.get('users!' + hash);
-
-    if (value) {
-      console.log(`User already exists with "${email}".`);
-      return;
-    }
-
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'createUser',
-        data: { email },
-        hash,
-      })
-    );
-
-    this.loggedIn = true;
-
-    console.log(`Created user for "${email}".`);
+  // Session
+  isLoggedIn() {
+    return this.sessionUseCase.isLoggedIn();
   }
 
   async login(email) {
-    const hash = sha256(email);
-
-    if (this.isLoggedIn()) {
-      console.log(`Already logged in as ${email}`);
-      return;
-    }
-
-    const value = await this.bee.get('users!' + hash);
-
-    if (!value) {
-      console.log(`Please sign up! No user found for "${email}".`);
-      return;
-    }
-
-    this.loggedIn = true;
-    console.log('Logged in as "' + email + '"');
+    return this.sessionUseCase.login(email);
   }
 
   logout() {
-    this.loggedIn = false;
-    console.log('Logged out');
+    return this.sessionUseCase.logout();
   }
 }
 
