@@ -14,16 +14,16 @@ const args = minimist(process.argv, {
     email: 'e',
   },
   default: {
-    swarm: true
+    swarm: true,
   },
-  boolean: ['ram', 'swarm']
+  boolean: ['ram', 'swarm'],
 })
 
-const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
+const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm'
 
 class Mneme {
-  constructor () {
-    this.store = new Corestore(args.ram ? ram : (args.storage || 'mneme'))
+  constructor() {
+    this.store = new Corestore(args.ram ? ram : args.storage || 'mneme')
     this.swarm = null
     this.autobase = null
     this.bee = null
@@ -34,17 +34,17 @@ class Mneme {
     return this.loggedIn
   }
 
-  async start () {
+  async start() {
     const writer = this.store.get({ name: 'writer' })
     const viewOutput = this.store.get({ name: 'view' })
 
     await writer.ready()
 
-    this.autobase = new Autobase({ 
-      inputs: [writer], 
-      localInput: writer, 
-      outputs: [viewOutput], 
-      localOutput: viewOutput
+    this.autobase = new Autobase({
+      inputs: [writer],
+      localInput: writer,
+      outputs: [viewOutput],
+      localOutput: viewOutput,
     })
 
     await this.autobase.ready()
@@ -58,10 +58,13 @@ class Mneme {
     await manager.ready()
 
     if (args.swarm) {
-      const topic = Buffer.from(sha256(SWARM_TOPIC), "hex")
+      const topic = Buffer.from(sha256(SWARM_TOPIC), 'hex')
       this.swarm = new Hyperswarm()
       this.swarm.on('connection', (socket, peerInfo) => {
-        console.log('info: Peer connected! ======> ', peerInfo.publicKey.toString('hex'));
+        console.log(
+          'info: Peer connected! ======> ',
+          peerInfo.publicKey.toString('hex')
+        )
         const stream = this.store.replicate(socket)
 
         manager.attachStream(stream)
@@ -74,28 +77,28 @@ class Mneme {
     this.info()
 
     const self = this
-    this.autobase.start({ 
-      unwrap: true, 
+    this.autobase.start({
+      unwrap: true,
       async apply(batch) {
         const b = self.bee.batch({ update: false })
 
         for (const { value } of batch) {
           const op = JSON.parse(value)
 
-          if (op.type === "createUser") {
-            const { hash, data } = op;
-            console.debug("[apply] ===========> CREATE_USER: ", { hash, data });
-            await b.put("users!" + hash, { hash, data });
-            console.debug("[apply] ===========> CREATED_USER! ", {
+          if (op.type === 'createUser') {
+            const { hash, data } = op
+            console.debug('[apply] ===========> CREATE_USER: ', { hash, data })
+            await b.put('users!' + hash, { hash, data })
+            console.debug('[apply] ===========> CREATED_USER! ', {
               hash,
               data,
-            });
+            })
           }
 
           if (op.type === 'post') {
             const hash = sha256(op.data)
             await b.put('posts!' + hash, { hash, votes: 0, data: op.data })
-            await b.put('top!' + lexint.pack(0, 'hex') + '!' + op.hash, op.hash);
+            await b.put('top!' + lexint.pack(0, 'hex') + '!' + op.hash, op.hash)
           }
 
           if (op.type === 'vote') {
@@ -104,78 +107,96 @@ class Mneme {
 
             if (!p) continue
 
-            await b.del('top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash)
+            await b.del(
+              'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash
+            )
             p.value.votes += inc
             await b.put('posts!' + op.hash, p.value)
-            await b.put('top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash, op.hash);
+            await b.put(
+              'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash,
+              op.hash
+            )
           }
         }
 
         await b.flush()
-      }
+      },
     })
 
     this.bee = new Hyperbee(this.autobase.view, {
       extension: false,
       keyEncoding: 'utf-8',
-      valueEncoding: 'json'
+      valueEncoding: 'json',
     })
   }
 
-  info () {
-    console.log('hrepl mneme.js ');
+  info() {
+    console.log('hrepl mneme.js ')
     console.log()
     console.log('To use another storage directory use --storage ./another')
     console.log('To disable swarming add --no-swarm')
     console.log()
   }
 
-  async * posts () {
-    for await (const data of this.bee.createReadStream({ gt: 'posts!', lt: 'posts!~' })) {
+  async *posts() {
+    for await (const data of this.bee.createReadStream({
+      gt: 'posts!',
+      lt: 'posts!~',
+    })) {
       yield data.value
     }
   }
 
-  async * topPosts () {
-    for await (const data of this.bee.createReadStream({ gt: 'top!', lt: 'top!~', reverse: true })) {
-      const { value } = (await this.bee.get('posts!' + data.value))
+  async *topPosts() {
+    for await (const data of this.bee.createReadStream({
+      gt: 'top!',
+      lt: 'top!~',
+      reverse: true,
+    })) {
+      const { value } = await this.bee.get('posts!' + data.value)
       yield value
     }
   }
 
-  async * users() {
+  async *users() {
     for await (const data of this.bee.createReadStream({
-      gt: "users!",
-      lt: "users!~",
+      gt: 'users!',
+      lt: 'users!~',
     })) {
-      yield data.value;
+      yield data.value
     }
   }
 
-  async post (text) {
+  async post(text) {
     const hash = sha256(text)
 
-    await this.autobase.append(JSON.stringify({
-      type: 'post',
-      hash,
-      data: text
-    }))
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'post',
+        hash,
+        data: text,
+      })
+    )
   }
 
-  async upvote (hash) {
-    await this.autobase.append(JSON.stringify({
-      type: 'vote',
-      hash,
-      up: true
-    }))
+  async upvote(hash) {
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'vote',
+        hash,
+        up: true,
+      })
+    )
   }
 
-  async downvote (hash) {
-    await this.autobase.append(JSON.stringify({
-      type: 'vote',
-      hash,
-      up: false
-    }))
+  async downvote(hash) {
+    await this.autobase.append(
+      JSON.stringify({
+        type: 'vote',
+        hash,
+        up: false,
+      })
+    )
   }
 
   async login(email) {
@@ -183,8 +204,8 @@ class Mneme {
 
     console.debug(`Logging in as ${email} (${hash}) `)
     await this.autobase.view.update()
-    const value = await this.autobase.view.get("users!" + hash)
-    console.debug("got user: ", { value })
+    const value = await this.autobase.view.get('users!' + hash)
+    console.debug('got user: ', { value })
 
     if (value) {
       this.loggedIn = true
@@ -208,6 +229,6 @@ export const mneme = new Mneme()
 
 await mneme.start()
 
-function sha256 (inp) {
+function sha256(inp) {
   return crypto.createHash('sha256').update(inp).digest('hex')
 }
