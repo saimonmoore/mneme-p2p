@@ -1,7 +1,8 @@
 class VoteUseCase {
-  constructor(bee, autobase) {
+  constructor(bee, autobase, session) {
     this.bee = bee;
     this.autobase = autobase;
+    this.session = session;
   }
 
   async upvote(hash) {

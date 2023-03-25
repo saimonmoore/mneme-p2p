@@ -9,18 +9,19 @@ import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
 import { UserUseCase } from './modules/User/application/usecases/UserUseCase/index.js';
 import { SessionUseCase } from './modules/Session/application/usecases/SessionUseCase/index.js';
+import { sessionRequiredInterceptor } from './modules/Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
 import { PostUseCase } from './modules/Post/application/usecases/PostUseCase/index.js';
 import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
 import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
 import { indexUsers } from './modules/User/application/indices/Users/users.index.js';
-import { indexPosts, indexPostVotes } from './modules/Post/application/indices/Posts/posts.index.js';
+import {
+  indexPosts,
+  indexPostVotes,
+} from './modules/Post/application/indices/Posts/posts.index.js';
 
 // TODO:
-// - cleanup code
 // - add tests
-// - check if user logged in before posting
-// - separate into modules (user, posts, voting, etc)
 // - start implementing actual mneme features (See: https://excalidraw.com/#room=c4d4d9c1ba6caaa086b8,3H6dTYLLfzyFDLwIz0irmA)
 
 const args = minimist(process.argv, {
@@ -40,7 +41,7 @@ const OPERATIONS = {
   CREATE_USER: 'createUser',
   POST: 'post',
   VOTE: 'vote',
-}
+};
 
 class Mneme {
   constructor() {
@@ -130,8 +131,18 @@ class Mneme {
       this.autobase,
       this.sessionUseCase
     );
-    this.postUseCase = new PostUseCase(this.bee, this.autobase);
-    this.upvoteUseCase = new VoteUseCase(this.bee, this.autobase);
+    this.postUseCase = sessionRequiredInterceptor(
+      new PostUseCase(
+        this.bee,
+        this.autobase,
+        this.sessionUseCase
+      )
+    );
+    this.upvoteUseCase = sessionRequiredInterceptor(new VoteUseCase(
+      this.bee,
+      this.autobase,
+      this.sessionUseCase
+    ));
   }
 
   info() {
