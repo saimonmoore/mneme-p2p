@@ -27,6 +27,11 @@ class Mneme {
     this.swarm = null
     this.autobase = null
     this.bee = null
+    this.loggedIn = null;
+  }
+
+  loggedIn() {
+    return this.loggedIn;
   }
 
   async start () {
