@@ -3,14 +3,15 @@ import Corestore from 'corestore';
 import Hyperswarm from 'hyperswarm';
 import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
-import crypto from 'crypto';
 import lexint from 'lexicographic-integer';
 import ram from 'random-access-memory';
 import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
-function sha256(inp) {
-  return crypto.createHash('sha256').update(inp).digest('hex');
-}
+import { UserUseCase } from './modules/User/application/usecases/UserUseCase/index.js';
+import { SessionUseCase } from './modules/Session/application/usecases/SessionUseCase/index.js';
+import { PostUseCase } from './modules/Post/application/usecases/PostUseCase/index.js';
+import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
+import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
 // TODO:
 // - cleanup code
@@ -31,154 +32,6 @@ const args = minimist(process.argv, {
 });
 
 const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
-
-class UserUseCase {
-  constructor(bee, autobase, sessionUseCase) {
-    this.bee = bee;
-    this.autobase = autobase;
-    this.sessionUseCase = sessionUseCase;
-  }
-
-  async *users() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'users!',
-      lt: 'users!~',
-    })) {
-      yield data.value;
-    }
-  }
-
-  async signup(email) {
-    const hash = sha256(email);
-
-    console.debug(`Signing up with: ${email}`);
-
-    const value = await this.bee.get('users!' + hash);
-
-    if (value) {
-      console.log(`User already exists with "${email}".`);
-      return;
-    }
-
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'createUser',
-        data: { email },
-        hash,
-      })
-    );
-
-    this.sessionUseCase.directLogin(email);
-
-    console.log(`Created user for "${email}".`);
-  }
-}
-
-class SessionUseCase {
-  constructor(bee, autobase) {
-    this.bee = bee;
-    this.autobase = autobase;
-    this.loggedIn = false;
-  }
-
-  isLoggedIn() {
-    return !!this.loggedIn;
-  }
-
-  directLogin(email) {
-    this.loggedIn = true;
-    console.log('Logged in as "' + email + '"');
-  }
-
-  async login(email) {
-    const hash = sha256(email);
-
-    if (this.isLoggedIn()) {
-      console.log(`Already logged in as ${email}`);
-      return;
-    }
-
-    const value = await this.bee.get('users!' + hash);
-
-    if (!value) {
-      console.log(`Please sign up! No user found for "${email}".`);
-      return;
-    }
-
-    this.loggedIn = true;
-    console.log('Logged in as "' + email + '"');
-  }
-
-  logout() {
-    this.loggedIn = false;
-    console.log('Logged out');
-  }
-}
-
-class PostUseCase {
-  constructor(bee, autobase) {
-    this.bee = bee;
-    this.autobase = autobase;
-  }
-
-  async *posts() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'posts!',
-      lt: 'posts!~',
-    })) {
-      yield data.value;
-    }
-  }
-
-  async *topPosts() {
-    for await (const data of this.bee.createReadStream({
-      gt: 'top!',
-      lt: 'top!~',
-      reverse: true,
-    })) {
-      const { value } = await this.bee.get('posts!' + data.value);
-      yield value;
-    }
-  }
-
-  async post(data) {
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'post',
-        data,
-      })
-    );
-
-    console.log('Posted: ' + data);
-  }
-}
-
-class VoteUseCase {
-  constructor(bee, autobase) {
-    this.bee = bee;
-    this.autobase = autobase;
-  }
-
-  async upvote(hash) {
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'vote',
-        hash,
-        up: true,
-      })
-    );
-  }
-
-  async downvote(hash) {
-    await this.autobase.append(
-      JSON.stringify({
-        type: 'vote',
-        hash,
-        up: false,
-      })
-    );
-  }
-}
 
 class Mneme {
   constructor() {
