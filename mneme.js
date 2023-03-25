@@ -1,12 +1,16 @@
-import minimist from 'minimist'
-import Corestore from 'corestore'
-import Hyperswarm from 'hyperswarm'
-import Autobase from 'autobase'
-import Hyperbee from 'hyperbee'
-import crypto from 'crypto'
-import lexint from 'lexicographic-integer'
-import ram from 'random-access-memory'
-import { AutobaseManager } from '@lejeunerenard/autobase-manager'
+import minimist from 'minimist';
+import Corestore from 'corestore';
+import Hyperswarm from 'hyperswarm';
+import Autobase from 'autobase';
+import Hyperbee from 'hyperbee';
+import crypto from 'crypto';
+import lexint from 'lexicographic-integer';
+import ram from 'random-access-memory';
+import { AutobaseManager } from '@lejeunerenard/autobase-manager';
+
+function sha256(inp) {
+  return crypto.createHash('sha256').update(inp).digest('hex');
+}
 
 const args = minimist(process.argv, {
   alias: {
@@ -17,125 +21,123 @@ const args = minimist(process.argv, {
     swarm: true,
   },
   boolean: ['ram', 'swarm'],
-})
+});
 
-const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm'
+const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
 
 class Mneme {
   constructor() {
-    this.store = new Corestore(args.ram ? ram : args.storage || 'mneme')
-    this.swarm = null
-    this.autobase = null
-    this.bee = null
-    this.loggedIn = null
+    this.store = new Corestore(args.ram ? ram : args.storage || 'mneme');
+    this.swarm = null;
+    this.autobase = null;
+    this.bee = null;
+    this.loggedIn = false;
   }
 
-  loggedIn() {
-    return this.loggedIn
+  isLoggedIn() {
+    return !!this.loggedIn;
   }
 
   async start() {
-    const writer = this.store.get({ name: 'writer' })
-    const viewOutput = this.store.get({ name: 'view' })
+    const writer = this.store.get({ name: 'writer' });
+    const viewOutput = this.store.get({ name: 'view' });
 
-    await writer.ready()
+    await writer.ready();
 
     this.autobase = new Autobase({
       inputs: [writer],
       localInput: writer,
       outputs: [viewOutput],
       localOutput: viewOutput,
-    })
+    });
 
-    await this.autobase.ready()
+    await this.autobase.ready();
 
     const manager = new AutobaseManager(
       this.autobase,
       () => true,
       this.store.get.bind(this.store),
       this.store.storage
-    )
-    await manager.ready()
+    );
+    await manager.ready();
 
     if (args.swarm) {
-      const topic = Buffer.from(sha256(SWARM_TOPIC), 'hex')
-      this.swarm = new Hyperswarm()
+      const topic = Buffer.from(sha256(SWARM_TOPIC), 'hex');
+      this.swarm = new Hyperswarm();
       this.swarm.on('connection', (socket, peerInfo) => {
         console.log(
           'info: Peer connected! ======> ',
           peerInfo.publicKey.toString('hex')
-        )
-        const stream = this.store.replicate(socket)
+        );
+        const stream = this.store.replicate(socket);
 
-        manager.attachStream(stream)
-      })
-      this.swarm.join(topic)
-      await this.swarm.flush()
-      process.once('SIGINT', () => this.swarm.destroy()) // for faster restarts
+        manager.attachStream(stream);
+      });
+      this.swarm.join(topic);
+      await this.swarm.flush();
+      process.once('SIGINT', () => this.swarm.destroy()); // for faster restarts
     }
 
-    this.info()
+    this.info();
 
-    const self = this
+    const self = this;
     this.autobase.start({
       unwrap: true,
       async apply(batch) {
-        const b = self.bee.batch({ update: false })
+        const b = self.bee.batch({ update: false });
 
         for (const { value } of batch) {
-          const op = JSON.parse(value)
+          const op = JSON.parse(value);
 
           if (op.type === 'createUser') {
-            const { hash, data } = op
-            console.debug('[apply] ===========> CREATE_USER: ', { hash, data })
-            await b.put('users!' + hash, { hash, data })
-            console.debug('[apply] ===========> CREATED_USER! ', {
-              hash,
-              data,
-            })
+            const { hash, data } = op;
+            await b.put('users!' + hash, { hash, data });
           }
 
           if (op.type === 'post') {
-            const hash = sha256(op.data)
-            await b.put('posts!' + hash, { hash, votes: 0, data: op.data })
-            await b.put('top!' + lexint.pack(0, 'hex') + '!' + op.hash, op.hash)
+            const hash = sha256(op.data);
+            await b.put('posts!' + hash, { hash, votes: 0, data: op.data });
+            await b.put(
+              'top!' + lexint.pack(0, 'hex') + '!' + op.hash,
+              op.hash
+            );
           }
 
           if (op.type === 'vote') {
-            const inc = op.up ? 1 : -1
-            const p = await self.bee.get('posts!' + op.hash, { update: false })
+            const inc = op.up ? 1 : -1;
+            const p = await self.bee.get('posts!' + op.hash, { update: false });
 
-            if (!p) continue
+            if (!p) continue;
 
             await b.del(
               'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash
-            )
-            p.value.votes += inc
-            await b.put('posts!' + op.hash, p.value)
+            );
+            p.value.votes += inc;
+            await b.put('posts!' + op.hash, p.value);
             await b.put(
               'top!' + lexint.pack(p.value.votes, 'hex') + '!' + op.hash,
               op.hash
-            )
+            );
           }
         }
 
-        await b.flush()
+        await b.flush();
       },
-    })
+    });
 
     this.bee = new Hyperbee(this.autobase.view, {
       extension: false,
       keyEncoding: 'utf-8',
       valueEncoding: 'json',
-    })
+    });
   }
 
   info() {
-    console.log('hrepl mneme.js ')
-    console.log()
-    console.log('To use another storage directory use --storage ./another')
-    console.log('To disable swarming add --no-swarm')
-    console.log()
+    console.log('hrepl mneme.js ');
+    console.log();
+    console.log('To use another storage directory use --storage ./another');
+    console.log('To disable swarming add --no-swarm');
+    console.log();
   }
 
   async *posts() {
@@ -143,7 +145,7 @@ class Mneme {
       gt: 'posts!',
       lt: 'posts!~',
     })) {
-      yield data.value
+      yield data.value;
     }
   }
 
@@ -153,8 +155,8 @@ class Mneme {
       lt: 'top!~',
       reverse: true,
     })) {
-      const { value } = await this.bee.get('posts!' + data.value)
-      yield value
+      const { value } = await this.bee.get('posts!' + data.value);
+      yield value;
     }
   }
 
@@ -163,12 +165,12 @@ class Mneme {
       gt: 'users!',
       lt: 'users!~',
     })) {
-      yield data.value
+      yield data.value;
     }
   }
 
   async post(text) {
-    const hash = sha256(text)
+    const hash = sha256(text);
 
     await this.autobase.append(
       JSON.stringify({
@@ -176,7 +178,7 @@ class Mneme {
         hash,
         data: text,
       })
-    )
+    );
   }
 
   async upvote(hash) {
@@ -186,7 +188,7 @@ class Mneme {
         hash,
         up: true,
       })
-    )
+    );
   }
 
   async downvote(hash) {
@@ -196,21 +198,19 @@ class Mneme {
         hash,
         up: false,
       })
-    )
+    );
   }
 
-  async login(email) {
-    const hash = sha256(email)
+  async signup(email) {
+    const hash = sha256(email);
 
-    console.debug(`Logging in as ${email} (${hash}) `)
-    await this.autobase.view.update()
-    const value = await this.autobase.view.get('users!' + hash)
-    console.debug('got user: ', { value })
+    console.debug(`Signing up with: ${email}`);
+
+    const value = await this.bee.get('users!' + hash);
 
     if (value) {
-      this.loggedIn = true
-      console.log(`Already logged in as ${email} (${value}) `)
-      return
+      console.log(`User already exists with "${email}".`);
+      return;
     }
 
     await this.autobase.append(
@@ -219,16 +219,38 @@ class Mneme {
         data: { email },
         hash,
       })
-    )
+    );
 
-    console.log('Logged in as "' + email + '"')
+    this.loggedIn = true;
+
+    console.log(`Created user for "${email}".`);
+  }
+
+  async login(email) {
+    const hash = sha256(email);
+
+    if (this.isLoggedIn()) {
+      console.log(`Already logged in as ${email}`);
+      return;
+    }
+
+    const value = await this.bee.get('users!' + hash);
+
+    if (!value) {
+      console.log(`Please sign up! No user found for "${email}".`);
+      return;
+    }
+
+    this.loggedIn = true;
+    console.log('Logged in as "' + email + '"');
+  }
+
+  logout() {
+    this.loggedIn = false;
+    console.log('Logged out');
   }
 }
 
-export const mneme = new Mneme()
+export const mneme = new Mneme();
 
-await mneme.start()
-
-function sha256(inp) {
-  return crypto.createHash('sha256').update(inp).digest('hex')
-}
+await mneme.start();
