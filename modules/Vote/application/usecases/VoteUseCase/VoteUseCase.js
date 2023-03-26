@@ -1,3 +1,5 @@
+import { OPERATIONS } from '../../../../../constants.js';
+
 class VoteUseCase {
   constructor(bee, autobase, session) {
     this.bee = bee;
@@ -8,7 +10,7 @@ class VoteUseCase {
   async upvote(hash) {
     await this.autobase.append(
       JSON.stringify({
-        type: 'vote',
+        type: OPERATIONS.VOTE,
         hash,
         up: true,
       })
@@ -18,7 +20,7 @@ class VoteUseCase {
   async downvote(hash) {
     await this.autobase.append(
       JSON.stringify({
-        type: 'vote',
+        type: OPERATIONS.VOTE,
         hash,
         up: false,
       })

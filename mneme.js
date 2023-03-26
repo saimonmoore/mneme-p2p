@@ -3,7 +3,6 @@ import Corestore from 'corestore';
 import Hyperswarm from 'hyperswarm';
 import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
-import lexint from 'lexicographic-integer';
 import ram from 'random-access-memory';
 import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
@@ -11,6 +10,7 @@ import { UserUseCase } from './modules/User/application/usecases/UserUseCase/ind
 import { SessionUseCase } from './modules/Session/application/usecases/SessionUseCase/index.js';
 import { sessionRequiredInterceptor } from './modules/Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
 import { PostUseCase } from './modules/Post/application/usecases/PostUseCase/index.js';
+import { RecordUseCase } from './modules/Record/application/usecases/RecordUseCase/index.js';
 import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
 import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
@@ -19,6 +19,10 @@ import {
   indexPosts,
   indexPostVotes,
 } from './modules/Post/application/indices/Posts/posts.index.js';
+import {
+  indexRecords,
+} from './modules/Record/application/indices/Records/records.index.js';
+import { OPERATIONS } from './constants.js';
 
 // TODO:
 // - add tests
@@ -36,12 +40,6 @@ const args = minimist(process.argv, {
 });
 
 const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
-
-const OPERATIONS = {
-  CREATE_USER: 'createUser',
-  POST: 'post',
-  VOTE: 'vote',
-};
 
 class Mneme {
   constructor() {
@@ -106,6 +104,10 @@ class Mneme {
             await indexUsers(batchedBeeOperations, operation);
           }
 
+          if (operation.type === OPERATIONS.RECORD) {
+            await indexRecords(batchedBeeOperations, operation);
+          }
+
           if (operation.type === OPERATIONS.POST) {
             await indexPosts(batchedBeeOperations, operation);
           }
@@ -131,6 +133,13 @@ class Mneme {
       this.autobase,
       this.sessionUseCase
     );
+    this.recordUseCase = sessionRequiredInterceptor(
+      new RecordUseCase(
+        this.bee,
+        this.autobase,
+        this.sessionUseCase
+      )
+    );
     this.postUseCase = sessionRequiredInterceptor(
       new PostUseCase(
         this.bee,
@@ -154,6 +163,15 @@ class Mneme {
   }
 
   // ENDPOINTS
+
+  // Record
+  async *records() {
+    yield* this.recordUseCase.records();
+  }
+
+  async record(data) {
+    return this.recordUseCase.record(data);
+  }
 
   // Post
   async *posts() {

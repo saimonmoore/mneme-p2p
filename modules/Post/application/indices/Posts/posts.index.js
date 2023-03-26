@@ -5,6 +5,7 @@ export const POSTS_KEY = 'org.mneme.posts!';
 export const TOP_POSTS_KEY = 'org.mneme.topPosts!';
 
 export async function indexPosts(batch, operation) {
+  console.log('indexRecords =========> ', { operation });
   const hash = sha256(operation.data);
   await batch.put(POSTS_KEY + hash, { hash, votes: 0, data: operation.data });
   await batch.put(

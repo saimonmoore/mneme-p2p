@@ -1,4 +1,5 @@
 import { sha256 } from '../../../../Shared/infrastructure/helpers/hash.js';
+import { OPERATIONS } from '../../../../../constants.js';
 
 class UserUseCase {
   constructor(bee, autobase, sessionUseCase) {
@@ -30,7 +31,7 @@ class UserUseCase {
 
     await this.autobase.append(
       JSON.stringify({
-        type: 'createUser',
+        type: OPERATIONS.CREATE_USER,
         data: { email },
         hash,
       })

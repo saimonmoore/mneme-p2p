@@ -10,6 +10,11 @@ export function sessionRequiredInterceptor(object) {
           return;
         }
 
+        if (!origMethod) {
+          console.error('Method not found ', { target, propKey, receiver, args });
+          return;
+        }
+
         return origMethod.apply(target, args);
       };
     },

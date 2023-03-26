@@ -1,4 +1,5 @@
 import { POSTS_KEY, TOP_POSTS_KEY } from '../../indices/Posts/posts.index.js';
+import { OPERATIONS } from '../../../../../constants.js';
 
 class PostUseCase {
   constructor(bee, autobase, session) {
@@ -30,7 +31,7 @@ class PostUseCase {
   async post(data) {
     await this.autobase.append(
       JSON.stringify({
-        type: 'post',
+        type: OPERATIONS.POST,
         data,
       })
     );
