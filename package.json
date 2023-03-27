@@ -3,6 +3,7 @@
   "dependencies": {
     "@lejeunerenard/autobase-manager": "../../p2p/autobase-manager",
     "autobase": "latest",
+    "camelcase": "^7.0.1",
     "corestore": "next",
     "hyperbee": "^1.6.3",
     "hyperswarm": "next",

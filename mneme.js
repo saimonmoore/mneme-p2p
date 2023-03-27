@@ -14,7 +14,7 @@ import { RecordUseCase } from './modules/Record/application/usecases/RecordUseCa
 import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
 import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
-import { indexUsers } from './modules/User/application/indices/Users/users.index.js';
+import { indexFriends, indexUsers } from './modules/User/application/indices/Users/users.index.js';
 import {
   indexPosts,
   indexPostVotes,
@@ -50,10 +50,12 @@ class Mneme {
   }
 
   async start() {
+    console.debug('Starting Mneme...');
     const writer = this.store.get({ name: 'writer' });
     const viewOutput = this.store.get({ name: 'view' });
 
     await writer.ready();
+    console.debug('Writer ready');
 
     this.autobase = new Autobase({
       inputs: [writer],
@@ -63,6 +65,7 @@ class Mneme {
     });
 
     await this.autobase.ready();
+    console.debug('Autobase ready');
 
     const manager = new AutobaseManager(
       this.autobase,
@@ -71,9 +74,12 @@ class Mneme {
       this.store.storage
     );
     await manager.ready();
+    console.debug('Autobase manager ready');
 
     if (args.swarm) {
       const topic = Buffer.from(sha256(SWARM_TOPIC), 'hex');
+      console.debug('Starting to swarm...');
+
       this.swarm = new Hyperswarm();
       this.swarm.on('connection', (socket, peerInfo) => {
         console.log(
@@ -85,7 +91,9 @@ class Mneme {
         manager.attachStream(stream);
       });
       this.swarm.join(topic);
+      console.debug('Joining swarm topic: ' + SWARM_TOPIC);
       await this.swarm.flush();
+      console.debug('Swarm ready');
       process.once('SIGINT', () => this.swarm.destroy()); // for faster restarts
     }
 
@@ -102,6 +110,10 @@ class Mneme {
 
           if (operation.type === OPERATIONS.CREATE_USER) {
             await indexUsers(batchedBeeOperations, operation);
+          }
+
+          if (operation.type === OPERATIONS.ADD_FRIEND) {
+            await indexFriends(batchedBeeOperations, operation);
           }
 
           if (operation.type === OPERATIONS.RECORD) {
@@ -152,6 +164,7 @@ class Mneme {
       this.autobase,
       this.sessionUseCase
     ));
+    console.debug('Mneme ready');
   }
 
   info() {
@@ -216,8 +229,25 @@ class Mneme {
     yield* this.userUserCase.users();
   }
 
-  async signup(email) {
-    return this.userUserCase.signup(email);
+  async *friends() {
+    yield* this.userUserCase.friends();
+  }
+
+  async *friendsByName(text) {
+    yield* this.userUserCase.friendsByName(text);
+  }
+
+  async *friendsByEmail(text) {
+    yield* this.userUserCase.friendsByEmail(text);
+  }
+
+  async signup(user) {
+    return this.userUserCase.signup(user);
+  }
+
+  // TODO: as User
+  async addFriend(user) {
+    return this.userUserCase.addFriend(user);
   }
 
   // Session

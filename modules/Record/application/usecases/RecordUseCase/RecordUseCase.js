@@ -12,6 +12,10 @@ function validateRecord(record) {
   return validator.validate(record, schema);
 }
 
+// /userHash/records/recordHash
+// /userHash/tags/tagHash
+// /userHash/keywords/keywordHash
+
 class RecordUseCase {
   constructor(bee, autobase, session) {
     this.bee = bee;
@@ -92,6 +96,7 @@ class RecordUseCase {
       JSON.stringify({
         type: OPERATIONS.RECORD,
         record: data,
+        // owner
       })
     );
 
