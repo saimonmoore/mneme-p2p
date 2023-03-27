@@ -105,7 +105,7 @@ class Mneme {
           }
 
           if (operation.type === OPERATIONS.RECORD) {
-            await indexRecords(batchedBeeOperations, operation);
+            await indexRecords(batchedBeeOperations, operation, self.bee);
           }
 
           if (operation.type === OPERATIONS.POST) {
@@ -167,6 +167,22 @@ class Mneme {
   // Record
   async *records() {
     yield* this.recordUseCase.records();
+  }
+
+  async *keywords() {
+    yield* this.recordUseCase.keywords();
+  }
+
+  async *tags() {
+    yield* this.recordUseCase.tags();
+  }
+
+  async *recordsForKeyword(keyword) {
+    yield* this.recordUseCase.recordsForKeyword(keyword);
+  }
+
+  async *recordsForTag(tag) {
+    yield* this.recordUseCase.recordsForTag(tag);
   }
 
   async record(data) {
