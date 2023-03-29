@@ -1,7 +1,13 @@
 {
   "type": "module",
+  "exports": "./dist/mneme.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "nodemon --watch 'src/**/*.ts' --exec 'yarn build'"
+  },
   "dependencies": {
     "@lejeunerenard/autobase-manager": "../../p2p/autobase-manager",
+    "@types/node": "^18.15.11",
     "autobase": "latest",
     "camelcase": "^7.0.1",
     "corestore": "next",
@@ -10,11 +16,14 @@
     "jsonschema": "^1.4.1",
     "lexicographic-integer": "^1.1.0",
     "minimist": "^1.2.5",
-    "random-access-memory": "^3.1.2"
+    "random-access-memory": "^3.1.2",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.8.0",
-    "prettier": "^2.8.7"
+    "nodemon": "^2.0.22",
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.2"
   }
 }
