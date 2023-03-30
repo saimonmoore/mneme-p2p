@@ -1,12 +1,15 @@
 import camelcase from 'camelcase';
-import type { BeeBatch } from '../../../../../@types/global.d.ts';
+import type { BeeBatch } from '@Types/global.d.ts';
 
-import { User } from '../../../domain/entities/user.js';
+import { User } from '@User/domain/entities/user.js';
 
 export const USERS_KEY = 'org.mneme.users!';
-export const FRIENDS_KEY = (userHash: string) => `${USERS_KEY}${userHash}!org.mneme.friends!`;
-export const FRIENDS_BY_NAME_KEY = (userHash: string) => `${USERS_KEY}${userHash}!org.mneme.friendsByName!`;
-export const FRIENDS_BY_EMAIL_KEY = (userHash: string) => `${USERS_KEY}${userHash}!org.mneme.friendsByEmail!`;
+export const FRIENDS_KEY = (userHash: string) =>
+  `${USERS_KEY}${userHash}!org.mneme.friends!`;
+export const FRIENDS_BY_NAME_KEY = (userHash: string) =>
+  `${USERS_KEY}${userHash}!org.mneme.friendsByName!`;
+export const FRIENDS_BY_EMAIL_KEY = (userHash: string) =>
+  `${USERS_KEY}${userHash}!org.mneme.friendsByEmail!`;
 
 type UserOperation = {
   hash: string;
@@ -32,8 +35,16 @@ export async function indexFriends(batch: BeeBatch, operation: UserOperation) {
   await batch.put(FRIENDS_KEY(user.hash as string) + hash, hash);
 
   // index by displayName
-  await batch.put(FRIENDS_BY_NAME_KEY(user.hash as string) + camelcase(friend.displayName as string), hash);
+  await batch.put(
+    FRIENDS_BY_NAME_KEY(user.hash as string) +
+      camelcase(friend.displayName as string),
+    hash
+  );
 
   // index by email
-  await batch.put(FRIENDS_BY_EMAIL_KEY(user.hash as string) + camelcase(friend.email as string), hash);
+  await batch.put(
+    FRIENDS_BY_EMAIL_KEY(user.hash as string) +
+      camelcase(friend.email as string),
+    hash
+  );
 }

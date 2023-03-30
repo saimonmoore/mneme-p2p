@@ -3,8 +3,10 @@
   "exports": "./dist/mneme.js",
   "typings": "dist/mneme.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "nodemon --watch 'src/**/*.ts' --exec 'yarn build'"
+    "build": "tsc --build --verbose",
+    "start": "yarn build --watch",
+    "lint": "TIMING=1 eslint \"**/*.ts*\"",
+    "check:types": "tsc --noEmit"
   },
   "dependencies": {
     "@lejeunerenard/autobase-manager": "../../p2p/autobase-manager",
@@ -22,9 +24,10 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "eslint": "^8.36.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
-    "nodemon": "^2.0.22",
     "prettier": "^2.8.7",
     "typescript": "^5.0.2"
   }

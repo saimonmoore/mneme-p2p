@@ -1,4 +1,4 @@
-import { sha256 } from '../../../Shared/infrastructure/helpers/hash.js';
+import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
 
 export type User = {
   email: string;

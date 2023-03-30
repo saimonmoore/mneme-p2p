@@ -7,21 +7,22 @@ import ram from 'random-access-memory';
 // @ts-ignore
 import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
-import { UserUseCase } from './modules/User/application/usecases/UserUseCase/index.js';
-import { SessionUseCase } from './modules/Session/application/usecases/SessionUseCase/index.js';
-import { sessionRequiredInterceptor } from './modules/Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
-import { RecordUseCase } from './modules/Record/application/usecases/RecordUseCase/index.js';
-import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
+import { UserUseCase } from '@User/application/usecases/UserUseCase/index.js';
+import { SessionUseCase } from '@Session/application/usecases/SessionUseCase/index.js';
+import { sessionRequiredInterceptor } from '@Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
+import { RecordUseCase } from '@Record/application/usecases/RecordUseCase/index.js';
+import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
 
-import { indexFriends, indexUsers } from './modules/User/application/indices/Users/users.index.js';
 import {
-  indexRecords,
-} from './modules/Record/application/indices/Records/records.index.js';
-import { OPERATIONS } from './constants.js';
+  indexFriends,
+  indexUsers,
+} from '@User/application/indices/Users/users.index.js';
+import { indexRecords } from '@Record/application/indices/Records/records.index.js';
+import { OPERATIONS } from '@config/constants.js';
 
-import type { User } from './modules/User/domain/entities/user.js';
-import type { MnemeRecord } from './modules/Record/domain/entities/record.js';
-import type { BeeBatch, HypercoreStream, PeerInfo } from './@types/global.d.ts'
+import type { User } from '@User/domain/entities/user.js';
+import type { MnemeRecord } from '@Record/domain/entities/record.js';
+import type { BeeBatch, HypercoreStream, PeerInfo } from '@Types/global.d.ts';
 
 // TODO:
 // - add tests
@@ -89,16 +90,19 @@ class Mneme {
       console.debug('Starting to swarm...');
 
       this.swarm = new Hyperswarm();
-      this.swarm.on('connection', (socket: HypercoreStream, peerInfo: PeerInfo) => {
-        // @ts-ignore
-        console.log(
-          'info: Peer connected! ======> ',
-          peerInfo.publicKey.toString('hex')
-        );
-        const stream = this.store.replicate(socket);
+      this.swarm.on(
+        'connection',
+        (socket: HypercoreStream, peerInfo: PeerInfo) => {
+          // @ts-ignore
+          console.log(
+            'info: Peer connected! ======> ',
+            peerInfo.publicKey.toString('hex')
+          );
+          const stream = this.store.replicate(socket);
 
-        manager.attachStream(stream);
-      });
+          manager.attachStream(stream);
+        }
+      );
       this.swarm.join(topic);
       console.debug('Joining swarm topic: ' + SWARM_TOPIC);
       await this.swarm.flush();
@@ -132,7 +136,7 @@ class Mneme {
           }
 
           if (operation.type === OPERATIONS.RECORD) {
-            await indexRecords(batchedBeeOperations, operation, self.bee);
+            await indexRecords(batchedBeeOperations, self.bee)(operation);
           }
         }
 
@@ -153,11 +157,7 @@ class Mneme {
       this.sessionUseCase
     );
     this.recordUseCase = sessionRequiredInterceptor(
-      new RecordUseCase(
-        this.bee,
-        this.autobase,
-        this.sessionUseCase
-      )
+      new RecordUseCase(this.bee, this.autobase, this.sessionUseCase)
     );
     console.debug('Mneme ready');
   }
@@ -173,28 +173,28 @@ class Mneme {
   // ENDPOINTS
 
   // Record
-  async *records() {
-    yield* this.recordUseCase.records();
+  async *myRecords() {
+    yield* this.recordUseCase.myRecords();
   }
 
-  async *keywords() {
-    yield* this.recordUseCase.keywords();
+  async *myKeywords() {
+    yield* this.recordUseCase.myKeywords();
   }
 
-  async *tags() {
-    yield* this.recordUseCase.tags();
+  async *myTags() {
+    yield* this.recordUseCase.myTags();
   }
 
-  async *recordsForKeyword(keyword: string) {
-    yield* this.recordUseCase.recordsForKeyword(keyword);
+  async *myRecordsForKeyword(keyword: string) {
+    yield* this.recordUseCase.myRecordsForKeyword(keyword);
   }
 
-  async *recordsForTag(tag: string) {
-    yield* this.recordUseCase.recordsForTag(tag);
+  async *myRecordsForTag(tag: string) {
+    yield* this.recordUseCase.myRecordsForTag(tag);
   }
 
-  async record(data: MnemeRecord) {
-    return this.recordUseCase.record(data);
+  async addRecord(data: MnemeRecord) {
+    return this.recordUseCase.addRecord(data);
   }
 
   // User
