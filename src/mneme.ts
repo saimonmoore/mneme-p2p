@@ -4,25 +4,24 @@ import Hyperswarm from 'hyperswarm';
 import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
 import ram from 'random-access-memory';
+// @ts-ignore
 import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
 import { UserUseCase } from './modules/User/application/usecases/UserUseCase/index.js';
 import { SessionUseCase } from './modules/Session/application/usecases/SessionUseCase/index.js';
 import { sessionRequiredInterceptor } from './modules/Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
-import { PostUseCase } from './modules/Post/application/usecases/PostUseCase/index.js';
 import { RecordUseCase } from './modules/Record/application/usecases/RecordUseCase/index.js';
-import { VoteUseCase } from './modules/Vote/application/usecases/VoteUseCase/index.js';
 import { sha256 } from './modules/Shared/infrastructure/helpers/hash.js';
 
 import { indexFriends, indexUsers } from './modules/User/application/indices/Users/users.index.js';
 import {
-  indexPosts,
-  indexPostVotes,
-} from './modules/Post/application/indices/Posts/posts.index.js';
-import {
   indexRecords,
 } from './modules/Record/application/indices/Records/records.index.js';
 import { OPERATIONS } from './constants.js';
+
+import type { User } from './modules/User/domain/entities/user.js';
+import type { MnemeRecord } from './modules/Record/domain/entities/record.js';
+import type { BeeBatch, HypercoreStream, PeerInfo } from './@types/global.d.ts'
 
 // TODO:
 // - add tests
@@ -42,6 +41,14 @@ const args = minimist(process.argv, {
 const SWARM_TOPIC = 'org.saimonmoore.mneme.swarm';
 
 class Mneme {
+  store: Corestore;
+  swarm: Hyperswarm | null;
+  autobase: Autobase | null;
+  bee: Hyperbee | null;
+  sessionUseCase: SessionUseCase;
+  userUseCase: UserUseCase;
+  recordUseCase: RecordUseCase;
+
   constructor() {
     this.store = new Corestore(args.ram ? ram : args.storage || 'mneme');
     this.swarm = null;
@@ -57,6 +64,7 @@ class Mneme {
     await writer.ready();
     console.debug('Writer ready');
 
+    // @ts-ignore
     this.autobase = new Autobase({
       inputs: [writer],
       localInput: writer,
@@ -81,7 +89,8 @@ class Mneme {
       console.debug('Starting to swarm...');
 
       this.swarm = new Hyperswarm();
-      this.swarm.on('connection', (socket, peerInfo) => {
+      this.swarm.on('connection', (socket: HypercoreStream, peerInfo: PeerInfo) => {
+        // @ts-ignore
         console.log(
           'info: Peer connected! ======> ',
           peerInfo.publicKey.toString('hex')
@@ -94,6 +103,7 @@ class Mneme {
       console.debug('Joining swarm topic: ' + SWARM_TOPIC);
       await this.swarm.flush();
       console.debug('Swarm ready');
+      // @ts-ignore
       process.once('SIGINT', () => this.swarm.destroy()); // for faster restarts
     }
 
@@ -102,9 +112,14 @@ class Mneme {
     const self = this;
     this.autobase.start({
       unwrap: true,
-      async apply(batch) {
+      async apply(batch: BeeBatch) {
+        if (!self.bee) {
+          throw new Error('Bee not initialized');
+        }
+
         const batchedBeeOperations = self.bee.batch({ update: false });
 
+        // @ts-ignore
         for (const { value } of batch) {
           const operation = JSON.parse(value);
 
@@ -119,14 +134,6 @@ class Mneme {
           if (operation.type === OPERATIONS.RECORD) {
             await indexRecords(batchedBeeOperations, operation, self.bee);
           }
-
-          if (operation.type === OPERATIONS.POST) {
-            await indexPosts(batchedBeeOperations, operation);
-          }
-
-          if (operation.type === OPERATIONS.VOTE) {
-            await indexPostVotes(batchedBeeOperations, operation, self.bee);
-          }
         }
 
         await batchedBeeOperations.flush();
@@ -140,7 +147,7 @@ class Mneme {
     });
 
     this.sessionUseCase = new SessionUseCase(this.bee, this.autobase);
-    this.userUserCase = new UserUseCase(
+    this.userUseCase = new UserUseCase(
       this.bee,
       this.autobase,
       this.sessionUseCase
@@ -152,18 +159,6 @@ class Mneme {
         this.sessionUseCase
       )
     );
-    this.postUseCase = sessionRequiredInterceptor(
-      new PostUseCase(
-        this.bee,
-        this.autobase,
-        this.sessionUseCase
-      )
-    );
-    this.upvoteUseCase = sessionRequiredInterceptor(new VoteUseCase(
-      this.bee,
-      this.autobase,
-      this.sessionUseCase
-    ));
     console.debug('Mneme ready');
   }
 
@@ -190,64 +185,42 @@ class Mneme {
     yield* this.recordUseCase.tags();
   }
 
-  async *recordsForKeyword(keyword) {
+  async *recordsForKeyword(keyword: string) {
     yield* this.recordUseCase.recordsForKeyword(keyword);
   }
 
-  async *recordsForTag(tag) {
+  async *recordsForTag(tag: string) {
     yield* this.recordUseCase.recordsForTag(tag);
   }
 
-  async record(data) {
+  async record(data: MnemeRecord) {
     return this.recordUseCase.record(data);
-  }
-
-  // Post
-  async *posts() {
-    yield* this.postUseCase.posts();
-  }
-
-  async *topPosts() {
-    yield* this.postUseCase.topPosts();
-  }
-
-  async post(text) {
-    return this.postUseCase.post(text);
-  }
-
-  // Vote
-  async upvote(hash) {
-    return this.upvoteUseCase.upvote(hash);
-  }
-
-  async downvote(hash) {
-    return this.upvoteUseCase.downvote(hash);
   }
 
   // User
   async *users() {
-    yield* this.userUserCase.users();
+    yield* this.userUseCase.users();
   }
 
   async *friends() {
-    yield* this.userUserCase.friends();
+    yield* this.userUseCase.friends();
   }
 
-  async *friendsByName(text) {
-    yield* this.userUserCase.friendsByName(text);
+  async *friendsByName(text: string) {
+    yield* this.userUseCase.friendsByName(text);
   }
 
-  async *friendsByEmail(text) {
-    yield* this.userUserCase.friendsByEmail(text);
+  async *friendsByEmail(text: string) {
+    yield* this.userUseCase.friendsByEmail(text);
   }
 
-  async signup(user) {
-    return this.userUserCase.signup(user);
+  async signup(user: User) {
+    return this.userUseCase.signup(user);
   }
 
   // TODO: as User
-  async addFriend(user) {
-    return this.userUserCase.addFriend(user);
+  async addFriend(userHash: string) {
+    return this.userUseCase.addFriend(userHash);
   }
 
   // Session
@@ -255,7 +228,7 @@ class Mneme {
     return this.sessionUseCase.isLoggedIn();
   }
 
-  async login(email) {
+  async login(email: string) {
     return this.sessionUseCase.login(email);
   }
 

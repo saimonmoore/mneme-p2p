@@ -1,12 +1,14 @@
 {
   "type": "module",
   "exports": "./dist/mneme.js",
+  "typings": "dist/mneme.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "nodemon --watch 'src/**/*.ts' --exec 'yarn build'"
   },
   "dependencies": {
     "@lejeunerenard/autobase-manager": "../../p2p/autobase-manager",
+    "@types/minimist": "^1.2.2",
     "@types/node": "^18.15.11",
     "autobase": "latest",
     "camelcase": "^7.0.1",

@@ -1,7 +1,8 @@
-export function sessionRequiredInterceptor(object) {
+export function sessionRequiredInterceptor(object: any) {
   const handler = {
-    get(target, propKey, receiver) {
+    get(target: any, propKey: string, receiver: any) {
       const origMethod = target[propKey];
+      // @ts-ignore
       return function(...args) {
         const session = target.session;
 

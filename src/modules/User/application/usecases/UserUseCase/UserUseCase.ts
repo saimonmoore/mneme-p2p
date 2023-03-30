@@ -1,10 +1,20 @@
+import Autobase from 'autobase';
+import Hyperbee from 'hyperbee';
+
 import camelcase from 'camelcase';
 import { sha256 } from '../../../../Shared/infrastructure/helpers/hash.js';
+
 import { OPERATIONS } from '../../../../../constants.js';
 import { USERS_KEY, FRIENDS_KEY, FRIENDS_BY_NAME_KEY, FRIENDS_BY_EMAIL_KEY } from '../../indices/Users/users.index.js';
+import { SessionUseCase } from '../../../../Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import type { User } from '../../../domain/entities/user.js';
 
 class UserUseCase {
-  constructor(bee, autobase, sessionUseCase) {
+  bee: Hyperbee;
+  autobase: Autobase;
+  sessionUseCase: SessionUseCase;
+
+  constructor(bee: Hyperbee, autobase: Autobase, sessionUseCase: SessionUseCase) {
     this.bee = bee;
     this.autobase = autobase;
     this.sessionUseCase = sessionUseCase;
@@ -16,6 +26,7 @@ class UserUseCase {
 
   // TODO: Only for logged in users
   async *users() {
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
       gt: USERS_KEY,
       lt: `${USERS_KEY}~`,
@@ -26,11 +37,12 @@ class UserUseCase {
 
   // TODO: Only for logged in users
   async *friends() {
-    const currentUserHash = this.sessionUseCase.currentUser.hash;
+    const currentUserHash = this.sessionUseCase.currentUser?.hash;
 
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
-      gt: FRIENDS_KEY(currentUserHash),
-      lt: `${FRIENDS_KEY(currentUserHash)}~`,
+      gt: FRIENDS_KEY(currentUserHash as string),
+      lt: `${FRIENDS_KEY(currentUserHash as string)}~`,
     })) {
       const hash = data.value;
       const entry = await this.bee.get(USERS_KEY + hash);
@@ -42,12 +54,13 @@ class UserUseCase {
   // TODO: Only for logged in users
   // /userHash/friends/EnricoStano
   // /userHash/friends/Enr
-  async *friendsByName(text) {
-    const currentUserHash = this.sessionUseCase.currentUser.hash;
+  async *friendsByName(text: string) {
+    const currentUserHash = this.sessionUseCase.currentUser?.hash;
 
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
-      gte: FRIENDS_BY_NAME_KEY(currentUserHash) + camelcase(text),
-      lt: FRIENDS_BY_NAME_KEY(currentUserHash) + camelcase(text) + '~',
+      gte: FRIENDS_BY_NAME_KEY(currentUserHash as string) + camelcase(text),
+      lt: FRIENDS_BY_NAME_KEY(currentUserHash as string) + camelcase(text) + '~',
       limit: 10,
     })) {
       const hash = data.value;
@@ -58,12 +71,13 @@ class UserUseCase {
   }
 
   // TODO: Only for logged in users
-  async *friendsByEmail(text) {
-    const currentUserHash = this.sessionUseCase.currentUser.hash;
+  async *friendsByEmail(text: string) {
+    const currentUserHash = this.sessionUseCase.currentUser?.hash;
 
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
-      gt: FRIENDS_BY_EMAIL_KEY(currentUserHash) + camelcase(text),
-      lt: FRIENDS_BY_EMAIL_KEY(currentUserHash) + camelcase(text) + '~',
+      gt: FRIENDS_BY_EMAIL_KEY(currentUserHash as string) + camelcase(text),
+      lt: FRIENDS_BY_EMAIL_KEY(currentUserHash as string) + camelcase(text) + '~',
       limit: 10,
     })) {
       const hash = data.value;
@@ -73,7 +87,7 @@ class UserUseCase {
     }
   }
 
-  async signup(user) {
+  async signup(user: User) {
     const hash = sha256(user.email);
 
     console.debug(`Signing up with: ${user.email}`);
@@ -101,7 +115,7 @@ class UserUseCase {
   }
 
   // TODO: Only for logged in users
-  async addFriend(hash) {
+  async addFriend(hash: string) {
     console.debug(`Adding friend with hash: ${hash}`);
 
     const entry = await this.bee.get(USERS_KEY + hash);

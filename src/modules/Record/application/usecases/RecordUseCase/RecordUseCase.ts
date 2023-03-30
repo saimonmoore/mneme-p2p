@@ -1,3 +1,6 @@
+import Autobase from 'autobase';
+import Hyperbee from 'hyperbee';
+
 import { Validator } from 'jsonschema';
 
 import { sha256 } from '../../../../Shared/infrastructure/helpers/hash.js';
@@ -5,11 +8,14 @@ import { OPERATIONS } from '../../../../../constants.js';
 import { RECORDS_KEY, TAGS_KEY, KEYWORDS_KEY } from '../../indices/Records/records.index.js';
 import schema from '../../../domain/entities/record.schema.json' assert { type: 'json' };
 
-function validateRecord(record) {
+import type { MnemeRecord } from '../../../domain/entities/record.js';
+import { SessionUseCase } from '../../../../Session/application/usecases/SessionUseCase/SessionUseCase.js';
+
+function validateRecord(record: MnemeRecord) {
   const validator = new Validator();
 
   // TODO: Link creator to user
-  return validator.validate(record, schema);
+  return validator.validate(record, schema as any);
 }
 
 // /userHash/records/recordHash
@@ -17,13 +23,18 @@ function validateRecord(record) {
 // /userHash/keywords/keywordHash
 
 class RecordUseCase {
-  constructor(bee, autobase, session) {
+  bee: Hyperbee;
+  autobase: Autobase;
+  session: SessionUseCase;
+
+  constructor(bee: Hyperbee, autobase: Autobase, session: SessionUseCase) {
     this.bee = bee;
     this.autobase = autobase;
     this.session = session;
   }
 
   async *records() {
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
       gt: RECORDS_KEY,
       lt: `${RECORDS_KEY}~`,
@@ -33,6 +44,7 @@ class RecordUseCase {
   }
 
   async *keywords() {
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
       gt: KEYWORDS_KEY,
       lt: `${KEYWORDS_KEY}~`,
@@ -41,7 +53,7 @@ class RecordUseCase {
     }
   }
 
-  async *recordsForKeyword(keyword) {
+  async *recordsForKeyword(keyword: string) {
     const keywordHash = sha256(keyword);
     const result = await this.bee.get(`${KEYWORDS_KEY}${keywordHash}`, { update: false });
 
@@ -59,6 +71,7 @@ class RecordUseCase {
   }
 
   async *tags() {
+    // @ts-ignore
     for await (const data of this.bee.createReadStream({
       gt: TAGS_KEY,
       lt: `${TAGS_KEY}~`,
@@ -67,7 +80,7 @@ class RecordUseCase {
     }
   }
 
-  async *recordsForTag(tag) {
+  async *recordsForTag(tag: string) {
     const tagHash = sha256(tag);
     const result = await this.bee.get(`${TAGS_KEY}${tagHash}`, { update: false });
 
@@ -84,7 +97,7 @@ class RecordUseCase {
     }
   }
 
-  async record(data) {
+  async record(data: MnemeRecord) {
     const validation = validateRecord(data);
 
     if (!validation.valid) {
@@ -92,15 +105,15 @@ class RecordUseCase {
       return { error: validation.errors };
     }
 
-    await this.autobase.append(
+    console.log('Created record: ' + data);
+
+    return await this.autobase.append(
       JSON.stringify({
         type: OPERATIONS.RECORD,
         record: data,
         // owner
       })
     );
-
-    console.log('Created record: ' + data);
   }
 }
 
