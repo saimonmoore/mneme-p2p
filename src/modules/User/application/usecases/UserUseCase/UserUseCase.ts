@@ -12,6 +12,8 @@ import {
   FRIENDS_BY_EMAIL_KEY,
 } from '#User/application/indices/Users/users.index.js';
 import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import { UserEntity } from '#User/domain/entities/user.js';
+
 import type { User } from '#User/domain/entities/user.js';
 
 class UserUseCase {
@@ -36,7 +38,7 @@ class UserUseCase {
       gt: USERS_KEY,
       lt: `${USERS_KEY}~`,
     })) {
-      yield data.value;
+      yield UserEntity.create(data.value.user as User);
     }
   }
 
@@ -52,7 +54,7 @@ class UserUseCase {
       const hash = data.value;
       const entry = await this.bee.get(USERS_KEY + hash);
 
-      yield entry.value.user;
+      yield UserEntity.create(entry.value.user);
     }
   }
 
@@ -72,7 +74,7 @@ class UserUseCase {
       const hash = data.value;
       const entry = await this.bee.get(USERS_KEY + hash);
 
-      yield entry.value.user;
+      yield UserEntity.create(entry.value.user);
     }
   }
 
@@ -90,7 +92,7 @@ class UserUseCase {
       const hash = data.value;
       const entry = await this.bee.get(USERS_KEY + hash);
 
-      yield entry.value.user;
+      yield UserEntity.create(entry.value.user);
     }
   }
 
@@ -123,8 +125,6 @@ class UserUseCase {
 
   // TODO: Only for logged in users
   async addFriend(hash: string) {
-    console.debug(`Adding friend with hash: ${hash}`);
-
     const entry = await this.bee.get(USERS_KEY + hash);
 
     if (!entry) {
@@ -133,8 +133,6 @@ class UserUseCase {
     }
 
     const friend = entry.value?.user;
-
-    console.debug(`Adding friend ===> : `, { friend });
 
     await this.autobase.append(
       JSON.stringify({

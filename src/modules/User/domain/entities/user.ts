@@ -13,9 +13,13 @@ export class UserEntity {
   displayName: string;
   avatarUrl: string;
 
-  constructor({ email, displayName, avatarUrl }: User) {
+  static create(user: User) {
+    return new UserEntity(user);
+  }
+
+  constructor({ hash, email, displayName, avatarUrl }: User) {
     this.email = email;
-    this.hash = sha256(email);
+    this.hash = hash || sha256(email);
     this.displayName = displayName;
     this.avatarUrl = avatarUrl;
   }

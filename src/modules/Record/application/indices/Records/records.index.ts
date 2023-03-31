@@ -31,7 +31,6 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
       tags.map(async (tag) => {
         const tagHash = sha256(tag.label);
         const tagsKey = TAGS_BY_USER_KEY(user.hash as string) + tagHash;
-        console.log('Indexing tag: ', { tag, tagHash, tagsKey });
 
         const value = await bee.get(tagsKey, { update: false });
 
@@ -43,7 +42,6 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
           records = [hash];
         }
 
-        console.log('Storing tag: ', { tag, tagsKey, records });
         await batch.put(tagsKey, {
           tag,
           records,

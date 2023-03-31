@@ -10,6 +10,9 @@ import {
   TAGS_BY_USER_KEY,
   KEYWORDS_BY_USER_KEY,
 } from '#Record/application/indices/Records/records.index.js';
+import { RecordEntity } from '#Record/domain/entities/record.js';
+import { KeywordEntity } from '#Record/domain/entities/keyword.js';
+import { TagEntity } from '#Record/domain/entities/tag.js';
 import schema from '#Record/domain/entities/record.schema.json' assert { type: 'json' };
 
 import type { MnemeRecord } from '#Record/domain/entities/record.js';
@@ -44,7 +47,7 @@ class RecordUseCase {
       gt: RECORDS_BY_USER_KEY(currentUserHash as string),
       lt: `${RECORDS_BY_USER_KEY(currentUserHash as string)}~`,
     })) {
-      yield data.value;
+      yield RecordEntity.create(data.value as MnemeRecord);
     }
   }
 
@@ -56,7 +59,10 @@ class RecordUseCase {
       gt: KEYWORDS_BY_USER_KEY(currentUserHash as string),
       lt: `${KEYWORDS_BY_USER_KEY(currentUserHash as string)}~`,
     })) {
-      yield data.value.keyword;
+      yield KeywordEntity.create({
+        ...data.value.keyword,
+        records: data.value.records,
+      });
     }
   }
 
@@ -81,7 +87,7 @@ class RecordUseCase {
         RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
         { update: false }
       );
-      yield entry.value.record;
+      yield RecordEntity.create(entry.value.record);
     }
   }
 
@@ -93,7 +99,10 @@ class RecordUseCase {
       gt: TAGS_BY_USER_KEY(currentUserHash as string),
       lt: `${TAGS_BY_USER_KEY(currentUserHash as string)}~`,
     })) {
-      yield data.value.tag;
+      yield TagEntity.create({
+        ...data.value.tag,
+        records: data.value.records,
+      });
     }
   }
 
@@ -118,7 +127,7 @@ class RecordUseCase {
         RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
         { update: false }
       );
-      yield entry.value.record;
+      yield RecordEntity.create(entry.value.record);
     }
   }
 
