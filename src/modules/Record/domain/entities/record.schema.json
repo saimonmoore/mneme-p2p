@@ -4,14 +4,9 @@
   "type": "object",
   "default": {},
   "title": "Mneme Record Schema",
-  "required": [
-    "url",
-    "type",
-    "keywords",
-    "tags"
-  ],
+  "required": ["url", "type", "keywords", "tags"],
   "properties": {
-    "publicKey": {
+    "hash": {
       "type": "string",
       "default": "",
       "title": "The publicKey Schema",
@@ -23,23 +18,14 @@
       "type": "string",
       "default": "",
       "title": "The url Schema",
-      "examples": [
-        "https://jsonschema.net"
-      ]
+      "examples": ["https://jsonschema.net"]
     },
     "type": {
       "type": "string",
       "default": "",
       "title": "The type Schema",
-      "examples": [
-        "twitter"
-      ],
-      "enum": [
-        "html",
-        "pdf",
-        "twitter",
-        "youtube"
-      ]
+      "examples": ["twitter"],
+      "enum": ["html", "pdf", "twitter", "youtube"]
     },
     "keywords": {
       "type": "array",
@@ -48,17 +34,9 @@
       "items": {
         "type": "string",
         "title": "A Schema",
-        "examples": [
-          "json",
-          "schema"
-        ]
+        "examples": ["json", "schema"]
       },
-      "examples": [
-        [
-          "json",
-          "schema"
-        ]
-      ]
+      "examples": [["json", "schema"]]
     },
     "tags": {
       "type": "array",
@@ -67,31 +45,25 @@
       "items": {
         "type": "string",
         "title": "A Schema",
-        "examples": [
-          "schema validation",
-          "json"
-        ]
+        "examples": ["schema validation", "json"]
       },
+      "examples": [["schema validation", "json"]]
+    },
+    "creatorHash": {
+      "type": "string",
+      "default": "",
+      "title": "The publicKey Schema",
       "examples": [
-        [
-          "schema validation",
-          "json"
-        ]
+        "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566"
       ]
     },
     "creator": {
       "type": "object",
       "default": {},
       "title": "The creator Schema",
-      "required": [
-        "displayName",
-        "avatar",
-        "email",
-        "createdAt",
-        "updatedAt"
-      ],
+      "required": ["displayName", "avatar", "email", "createdAt", "updatedAt"],
       "properties": {
-        "publicKey": {
+        "hash": {
           "type": "string",
           "default": "",
           "title": "The publicKey Schema",
@@ -103,9 +75,7 @@
           "type": "string",
           "default": "",
           "title": "The displayName Schema",
-          "examples": [
-            "Simon Moore"
-          ]
+          "examples": ["Simon Moore"]
         },
         "avatar": {
           "type": {
@@ -122,25 +92,19 @@
           "default": "",
           "title": "The email Schema",
           "format": "email",
-          "examples": [
-            "simon.moore@mneme.org"
-          ]
+          "examples": ["simon.moore@mneme.org"]
         },
         "createdAt": {
           "type": "string",
           "default": "",
           "title": "The createdAt Schema",
-          "examples": [
-            "2023-03-26T07:09:37.765Z"
-          ]
+          "examples": ["2023-03-26T07:09:37.765Z"]
         },
         "updatedAt": {
           "type": "string",
           "default": "",
           "title": "The updatedAt Schema",
-          "examples": [
-            "2023-03-26T07:09:37.765Z"
-          ]
+          "examples": ["2023-03-26T07:09:37.765Z"]
         }
       },
       "examples": [
@@ -158,17 +122,13 @@
       "type": "string",
       "default": "",
       "title": "The createdAt Schema",
-      "examples": [
-        "2023-03-26T07:09:37.765Z"
-      ]
+      "examples": ["2023-03-26T07:09:37.765Z"]
     },
     "updatedAt": {
       "type": "string",
       "default": "",
       "title": "The updatedAt Schema",
-      "examples": [
-        "2023-03-26T07:09:37.765Z"
-      ]
+      "examples": ["2023-03-26T07:09:37.765Z"]
     }
   },
   "examples": [
@@ -176,14 +136,9 @@
       "url": "https://jsonschema.net",
       "type": "twitter",
       "id": 1,
-      "keywords": [
-        "json",
-        "schema"
-      ],
-      "tags": [
-        "schema validation",
-        "json"
-      ],
+      "keywords": ["json", "schema"],
+      "tags": ["schema validation", "json"],
+      "hash": "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566",
       "creator": {
         "publicKey": "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566",
         "displayName": "Simon Moore",

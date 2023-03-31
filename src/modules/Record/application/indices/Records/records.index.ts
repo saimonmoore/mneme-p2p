@@ -40,7 +40,10 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
           records = [hash];
         }
 
-        await batch.put(TAGS_KEY + tagHash, { tag, records });
+        await batch.put(TAGS_BY_USER_KEY(user.hash as string) + tagHash, {
+          tag,
+          records,
+        });
       })
     );
   }
@@ -62,7 +65,10 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
           records = [hash];
         }
 
-        await batch.put(KEYWORDS_KEY + keywordHash, { keyword, records });
+        await batch.put(
+          KEYWORDS_BY_USER_KEY(user.hash as string) + keywordHash,
+          { keyword, records }
+        );
       })
     );
   }
@@ -78,7 +84,13 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
     const hash = sha256(record.url);
     await batch.put(RECORDS_BY_USER_KEY(user.hash as string) + hash, {
       hash,
-      record,
+      record: {
+        ...record,
+        hash,
+        creatorHash: user.hash,
+        createdAt: new Date().toUTCString(),
+        updatedAt: new Date().toUTCString(),
+      },
     });
 
     await indexTags(user, record.tags, hash);

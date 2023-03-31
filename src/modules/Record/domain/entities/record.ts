@@ -13,8 +13,8 @@ export type MnemeRecord = {
   type: MnemeRecordType;
   keywords: string[];
   tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   hash?: string;
   creatorHash: string;
   creator?: User;
@@ -30,15 +30,23 @@ export class RecordEntity {
   updatedAt: Date;
   creatorHash: string;
 
-  constructor({ url, type, keywords, tags, creatorHash }: MnemeRecord) {
+  constructor({
+    url,
+    type,
+    keywords,
+    tags,
+    creatorHash,
+    createdAt,
+    updatedAt,
+  }: MnemeRecord) {
     this.url = url;
     this.hash = sha256(url);
     this.type = type;
     this.keywords = keywords;
     this.tags = tags;
     this.creatorHash = creatorHash;
-    this.createdAt = new Date();
-    this.updatedAt = this.createdAt;
+    this.createdAt = new Date(createdAt);
+    this.updatedAt = new Date(updatedAt);
   }
 
   set creator(user: User) {

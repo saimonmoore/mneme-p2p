@@ -18,7 +18,6 @@ import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/Ses
 function validateRecord(record: MnemeRecord) {
   const validator = new Validator();
 
-  // TODO: Link creator to user
   return validator.validate(record, schema as any);
 }
 
