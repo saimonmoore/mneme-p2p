@@ -1,10 +1,10 @@
 import Hyperbee from 'hyperbee';
 
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
 
-import type { MnemeRecord } from '@Record/domain/entities/record.js';
-import type { User } from '@User/domain/entities/user.js';
-import type { BeeBatch } from '@Types/global.d.ts';
+import type { MnemeRecord } from '#Record/domain/entities/record.js';
+import type { User } from '#User/domain/entities/user.js';
+import type { BeeBatch } from '#Types/global.d.ts';
 
 export const RECORDS_KEY = 'org.mneme.records!';
 export const TAGS_KEY = 'org.mneme.tags!';

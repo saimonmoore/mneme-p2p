@@ -9,7 +9,8 @@
   "root": true,
   "parserOptions": {
     "sourceType": "module",
-    "ecmaVersion": 2015
+    "ecmaVersion": 2015,
+    "allowImportExportEverywhere": true
   },
   "rules": {
     "@typescript-eslint/ban-ts-comment": "off",

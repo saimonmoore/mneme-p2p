@@ -7,22 +7,22 @@ import ram from 'random-access-memory';
 // @ts-ignore
 import { AutobaseManager } from '@lejeunerenard/autobase-manager';
 
-import { UserUseCase } from '@User/application/usecases/UserUseCase/index.js';
-import { SessionUseCase } from '@Session/application/usecases/SessionUseCase/index.js';
-import { sessionRequiredInterceptor } from '@Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
-import { RecordUseCase } from '@Record/application/usecases/RecordUseCase/index.js';
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
+import { UserUseCase } from '#User/application/usecases/UserUseCase/index.js';
+import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/index.js';
+import { sessionRequiredInterceptor } from '#Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
+import { RecordUseCase } from '#Record/application/usecases/RecordUseCase/index.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
 
 import {
   indexFriends,
   indexUsers,
-} from '@User/application/indices/Users/users.index.js';
-import { indexRecords } from '@Record/application/indices/Records/records.index.js';
-import { OPERATIONS } from '@config/constants.js';
+} from '#User/application/indices/Users/users.index.js';
+import { indexRecords } from '#Record/application/indices/Records/records.index.js';
+import { OPERATIONS } from '#config/constants.js';
 
-import type { User } from '@User/domain/entities/user.js';
-import type { MnemeRecord } from '@Record/domain/entities/record.js';
-import type { BeeBatch, HypercoreStream, PeerInfo } from '@Types/global.d.ts';
+import type { User } from '#User/domain/entities/user.js';
+import type { MnemeRecord } from '#Record/domain/entities/record.js';
+import type { BeeBatch, HypercoreStream, PeerInfo } from '#Types/global.d.ts';
 
 // TODO:
 // - add tests

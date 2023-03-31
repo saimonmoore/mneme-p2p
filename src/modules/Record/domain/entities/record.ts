@@ -1,5 +1,5 @@
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
-import { User } from '@User/domain/entities/user.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
+import { User } from '#User/domain/entities/user.js';
 
 export enum MnemeRecordType {
   TWITTER = 'twitter',

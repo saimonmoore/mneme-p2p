@@ -1,7 +1,7 @@
 import camelcase from 'camelcase';
-import type { BeeBatch } from '@Types/global.d.ts';
+import type { BeeBatch } from '#Types/global.d.ts';
 
-import { User } from '@User/domain/entities/user.js';
+import { User } from '#User/domain/entities/user.js';
 
 export const USERS_KEY = 'org.mneme.users!';
 export const FRIENDS_KEY = (userHash: string) =>

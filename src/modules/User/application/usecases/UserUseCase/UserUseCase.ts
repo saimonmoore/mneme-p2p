@@ -2,17 +2,17 @@ import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
 
 import camelcase from 'camelcase';
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
 
-import { OPERATIONS } from '@config/constants.js';
+import { OPERATIONS } from '#config/constants.js';
 import {
   USERS_KEY,
   FRIENDS_KEY,
   FRIENDS_BY_NAME_KEY,
   FRIENDS_BY_EMAIL_KEY,
-} from '@User/application/indices/Users/users.index.js';
-import { SessionUseCase } from '@Session/application/usecases/SessionUseCase/SessionUseCase.js';
-import type { User } from '@User/domain/entities/user.js';
+} from '#User/application/indices/Users/users.index.js';
+import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import type { User } from '#User/domain/entities/user.js';
 
 class UserUseCase {
   bee: Hyperbee;

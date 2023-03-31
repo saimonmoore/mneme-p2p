@@ -3,17 +3,17 @@ import Hyperbee from 'hyperbee';
 
 import { Validator } from 'jsonschema';
 
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
-import { OPERATIONS } from '@config/constants.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
+import { OPERATIONS } from '#config/constants.js';
 import {
   RECORDS_BY_USER_KEY,
   TAGS_BY_USER_KEY,
   KEYWORDS_BY_USER_KEY,
-} from '@Record/application/indices/Records/records.index.js';
-import schema from '@Record/domain/entities/record.schema.json' assert { type: 'json' };
+} from '#Record/application/indices/Records/records.index.js';
+import schema from '#Record/domain/entities/record.schema.json' assert { type: 'json' };
 
-import type { MnemeRecord } from '@Record/domain/entities/record.js';
-import { SessionUseCase } from '@Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import type { MnemeRecord } from '#Record/domain/entities/record.js';
+import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
 
 function validateRecord(record: MnemeRecord) {
   const validator = new Validator();

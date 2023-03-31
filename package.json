@@ -4,6 +4,7 @@
   "typings": "dist/mneme.js",
   "scripts": {
     "build": "tsc --build --verbose",
+    "clean": "rm -rf dist",
     "start": "yarn build --watch",
     "lint": "TIMING=1 eslint \"**/*.ts*\"",
     "check:types": "tsc --noEmit"
@@ -30,5 +31,13 @@
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.7",
     "typescript": "^5.0.2"
+  },
+  "imports": {
+    "#config/*": "./dist/config/*",
+    "#Types/*": "./dist/@types/*",
+    "#Record/*": "./dist/modules/Record/*",
+    "#Session/*": "./dist/modules/Session/*",
+    "#Shared/*": "./dist/modules/Shared/*",
+    "#User/*": "./dist/modules/User/*"
   }
 }

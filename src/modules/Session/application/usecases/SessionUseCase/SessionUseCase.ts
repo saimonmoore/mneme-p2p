@@ -1,10 +1,10 @@
 import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
 
-import { sha256 } from '@Shared/infrastructure/helpers/hash.js';
-import { USERS_KEY } from '@User/application/indices/Users/users.index.js';
+import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
+import { USERS_KEY } from '#User/application/indices/Users/users.index.js';
 
-import { User } from '@User/domain/entities/user.js';
+import { User } from '#User/domain/entities/user.js';
 
 class SessionUseCase {
   bee: Hyperbee;
