@@ -3,6 +3,22 @@ type MnemeTopic = {
   wikiLink: string;
 };
 
+const correctWikiLinks = (url: string) => {
+  const CATEGORY_WIKI_URL = 'http://en.wikipedia.org/Category:';
+  const WIKIPEDIA_URL = 'http://en.wikipedia.org/';
+  const WIKI_URL = 'http://en.wikipedia.org/wiki/';
+
+  if (url.startsWith(CATEGORY_WIKI_URL)) {
+    return url.replace(CATEGORY_WIKI_URL, WIKI_URL);
+  }
+
+  if (!url.startsWith(WIKI_URL)) {
+    return url.replace(WIKIPEDIA_URL, WIKI_URL);
+  }
+
+  return url;
+};
+
 const removeDuplicateLabels = (arr: MnemeTopic[]) => {
   const labels = new Set();
   return arr.filter((obj) => {
@@ -65,7 +81,7 @@ async function analyzeURLForKeywords(url: string, numOfKeywords = 10) {
     .slice(0, numOfKeywords)
     .map((topic: TextRazorTopic) => ({
       label: topic.label,
-      wikiLink: topic.wikiLink,
+      wikiLink: correctWikiLinks(topic.wikiLink),
     }));
 
   const tags = data.response.coarseTopics
@@ -73,7 +89,7 @@ async function analyzeURLForKeywords(url: string, numOfKeywords = 10) {
     .slice(0, numOfKeywords)
     .map((topic: TextRazorTopic) => ({
       label: topic.label,
-      wikiLink: topic.wikiLink,
+      wikiLink: correctWikiLinks(topic.wikiLink),
     }));
 
   const entities = data.response.entities
@@ -84,7 +100,7 @@ async function analyzeURLForKeywords(url: string, numOfKeywords = 10) {
     .slice(0, numOfKeywords)
     .map((entity: TextRazorEntity) => ({
       label: entity.entityEnglishId,
-      wikiLink: entity.wikiLink,
+      wikiLink: correctWikiLinks(entity.wikiLink),
     }));
 
   return {
