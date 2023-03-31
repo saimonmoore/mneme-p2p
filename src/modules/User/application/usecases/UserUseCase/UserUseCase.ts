@@ -12,6 +12,7 @@ import {
   FRIENDS_BY_EMAIL_KEY,
 } from '#User/application/indices/Users/users.index.js';
 import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import { sessionRequired } from '#Session/application/decorators/sessionRequired.js';
 import { UserEntity } from '#User/domain/entities/user.js';
 
 import type { User } from '#User/domain/entities/user.js';
@@ -31,7 +32,7 @@ class UserUseCase {
   // /userHash/friends/EnricoStano
   // /userHash/friends/enrico@stano.org
 
-  // TODO: Only for logged in users
+  @sessionRequired
   async *users() {
     // @ts-ignore
     for await (const data of this.bee.createReadStream({
@@ -42,7 +43,7 @@ class UserUseCase {
     }
   }
 
-  // TODO: Only for logged in users
+  @sessionRequired
   async *friends() {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -58,9 +59,10 @@ class UserUseCase {
     }
   }
 
-  // TODO: Only for logged in users
   // /userHash/friends/EnricoStano
   // /userHash/friends/Enr
+
+  @sessionRequired
   async *friendsByName(text: string) {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -78,7 +80,7 @@ class UserUseCase {
     }
   }
 
-  // TODO: Only for logged in users
+  @sessionRequired
   async *friendsByEmail(text: string) {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -123,7 +125,7 @@ class UserUseCase {
     console.log(`Created user for "${loggedInUser.email}".`);
   }
 
-  // TODO: Only for logged in users
+  @sessionRequired
   async addFriend(hash: string) {
     const entry = await this.bee.get(USERS_KEY + hash);
 

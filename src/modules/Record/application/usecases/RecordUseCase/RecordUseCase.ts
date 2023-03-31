@@ -20,6 +20,7 @@ import schema from '#Record/domain/entities/record.schema.json' assert { type: '
 
 import type { MnemeRecord } from '#Record/domain/entities/record.js';
 import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import { sessionRequired } from '#Session/application/decorators/sessionRequired.js';
 import { USERS_KEY } from '#User/application/indices/Users/users.index.js';
 
 function validateRecord(record: MnemeRecord) {
@@ -43,6 +44,7 @@ class RecordUseCase {
     this.session = session;
   }
 
+  @sessionRequired
   async *myRecords() {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -60,6 +62,7 @@ class RecordUseCase {
     }
   }
 
+  @sessionRequired
   async *myKeywords() {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -75,6 +78,7 @@ class RecordUseCase {
     }
   }
 
+  @sessionRequired
   async *myKeywordsByLabel(text: string) {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -95,6 +99,7 @@ class RecordUseCase {
     }
   }
 
+  @sessionRequired
   async *myRecordsForKeyword(keyword: string) {
     const keywordHash = sha256(keyword);
     const currentUserHash = this.session.currentUser?.hash;
@@ -112,6 +117,7 @@ class RecordUseCase {
     yield* this.findRecords(result.value.records);
   }
 
+  @sessionRequired
   async *myTags() {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -127,6 +133,7 @@ class RecordUseCase {
     }
   }
 
+  @sessionRequired
   async *myTagsByLabel(text: string) {
     const currentUserHash = this.session.currentUser?.hash;
 
@@ -144,6 +151,7 @@ class RecordUseCase {
     }
   }
 
+  @sessionRequired
   async *myRecordsForTag(tag: string) {
     const tagHash = sha256(tag);
     const currentUserHash = this.session.currentUser?.hash;
@@ -161,6 +169,7 @@ class RecordUseCase {
     yield* this.findRecords(result.value.records);
   }
 
+  @sessionRequired
   async addRecord(data: MnemeRecord) {
     const validation = validateRecord(data);
 

@@ -26,7 +26,6 @@ import type { BeeBatch, HypercoreStream, PeerInfo } from '#Types/global.d.ts';
 
 // TODO:
 // - add tests
-// - start implementing actual mneme features (See: https://excalidraw.com/#room=c4d4d9c1ba6caaa086b8,3H6dTYLLfzyFDLwIz0irmA)
 
 const args = minimist(process.argv, {
   alias: {
@@ -151,10 +150,8 @@ class Mneme {
     });
 
     this.sessionUseCase = new SessionUseCase(this.bee, this.autobase);
-    this.userUseCase = new UserUseCase(
-      this.bee,
-      this.autobase,
-      this.sessionUseCase
+    this.userUseCase = sessionRequiredInterceptor(
+      new UserUseCase(this.bee, this.autobase, this.sessionUseCase)
     );
     this.recordUseCase = sessionRequiredInterceptor(
       new RecordUseCase(this.bee, this.autobase, this.sessionUseCase)
@@ -226,7 +223,6 @@ class Mneme {
     return this.userUseCase.signup(user);
   }
 
-  // TODO: as User
   async addFriend(userHash: string) {
     return this.userUseCase.addFriend(userHash);
   }
