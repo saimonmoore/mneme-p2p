@@ -31,23 +31,19 @@
       "type": "array",
       "default": [],
       "title": "The keywords Schema",
-      "items": {
-        "type": "string",
-        "title": "A Schema",
-        "examples": ["json", "schema"]
-      },
-      "examples": [["json", "schema"]]
+      "items": { "$ref": "#/definitions/MnemeTopic" },
+      "examples": [
+        [{ "label": "json", "wikiLink": "https://en.wikipedia.org/wiki/JSON" }]
+      ]
     },
     "tags": {
       "type": "array",
       "default": [],
       "title": "The tags Schema",
-      "items": {
-        "type": "string",
-        "title": "A Schema",
-        "examples": ["schema validation", "json"]
-      },
-      "examples": [["schema validation", "json"]]
+      "items": { "$ref": "#/definitions/MnemeTopic" },
+      "examples": [
+        [{ "label": "json", "wikiLink": "https://en.wikipedia.org/wiki/JSON" }]
+      ]
     },
     "creatorHash": {
       "type": "string",
@@ -56,6 +52,18 @@
       "examples": [
         "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566"
       ]
+    },
+    "createdAt": {
+      "type": "string",
+      "default": "",
+      "title": "The createdAt Schema",
+      "examples": ["2023-03-26T07:09:37.765Z"]
+    },
+    "updatedAt": {
+      "type": "string",
+      "default": "",
+      "title": "The updatedAt Schema",
+      "examples": ["2023-03-26T07:09:37.765Z"]
     },
     "creator": {
       "type": "object",
@@ -78,9 +86,8 @@
           "examples": ["Simon Moore"]
         },
         "avatar": {
-          "type": {
-            "$ref": "#/definitions/URL"
-          },
+          "type": "string",
+          "$ref": "#/definitions/URL",
           "default": "",
           "title": "The avatar Schema",
           "examples": [
@@ -109,7 +116,7 @@
       },
       "examples": [
         {
-          "publicKey": "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566",
+          "hash": "103283b30db86e1fffd19ffa327d3dc98f079cb6a606f4c5c9c98ee14b405566",
           "displayName": "Simon Moore",
           "avatar": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Simon_Moore_2014.jpg",
           "email": "simon.moore@mneme.org",
@@ -117,18 +124,6 @@
           "updatedAt": "2023-03-26T07:09:37.765Z"
         }
       ]
-    },
-    "createdAt": {
-      "type": "string",
-      "default": "",
-      "title": "The createdAt Schema",
-      "examples": ["2023-03-26T07:09:37.765Z"]
-    },
-    "updatedAt": {
-      "type": "string",
-      "default": "",
-      "title": "The updatedAt Schema",
-      "examples": ["2023-03-26T07:09:37.765Z"]
     }
   },
   "examples": [
@@ -155,6 +150,26 @@
     "URL": {
       "format": "uri",
       "pattern": "^https?://"
+    },
+    "MnemeTopic": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "default": "",
+          "title": "The label Schema",
+          "examples": ["Science"]
+        },
+        "wikiLink": {
+          "type": "string",
+          "default": "",
+          "title": "The wikiLink Schema",
+          "examples": ["https://en.wikipedia.org/wiki/Science"]
+        }
+      },
+      "examples": [
+        { "label": "json", "wikiLink": "https://en.wikipedia.org/wiki/JSON" }
+      ]
     }
   }
 }

@@ -2,13 +2,16 @@ import Hyperbee from 'hyperbee';
 
 import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
 
-import type { MnemeRecord } from '#Record/domain/entities/record.js';
+import type {
+  MnemeRecord,
+  MnemeTopic,
+} from '#Record/domain/entities/record.js';
 import type { User } from '#User/domain/entities/user.js';
 import type { BeeBatch } from '#Types/global.d.ts';
 
 export const RECORDS_KEY = 'org.mneme.records!';
-export const TAGS_KEY = 'org.mneme.tags!';
-export const KEYWORDS_KEY = 'org.mneme.keywords!';
+export const TAGS_KEY = 'org.mneme.tags';
+export const KEYWORDS_KEY = 'org.mneme.keywords';
 export const RECORDS_BY_USER_KEY = (userHash: string) =>
   `${userHash}!${RECORDS_KEY}!`;
 export const TAGS_BY_USER_KEY = (userHash: string) =>
@@ -23,14 +26,14 @@ type RecordOperation = {
 };
 
 export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
-  async function indexTags(user: User, tags: string[], hash: string) {
+  async function indexTags(user: User, tags: MnemeTopic[], hash: string) {
     await Promise.all(
       tags.map(async (tag) => {
-        const tagHash = sha256(tag);
-        const value = await bee.get(
-          TAGS_BY_USER_KEY(user.hash as string) + tagHash,
-          { update: false }
-        );
+        const tagHash = sha256(tag.label);
+        const tagsKey = TAGS_BY_USER_KEY(user.hash as string) + tagHash;
+        console.log('Indexing tag: ', { tag, tagHash, tagsKey });
+
+        const value = await bee.get(tagsKey, { update: false });
 
         let records = value?.value?.records;
 
@@ -40,7 +43,8 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
           records = [hash];
         }
 
-        await batch.put(TAGS_BY_USER_KEY(user.hash as string) + tagHash, {
+        console.log('Storing tag: ', { tag, tagsKey, records });
+        await batch.put(tagsKey, {
           tag,
           records,
         });
@@ -48,14 +52,18 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
     );
   }
 
-  async function indexKeywords(user: User, keywords: string[], hash: string) {
+  async function indexKeywords(
+    user: User,
+    keywords: MnemeTopic[],
+    hash: string
+  ) {
     await Promise.all(
-      keywords.map(async (keyword: string) => {
-        const keywordHash = sha256(keyword);
-        const value = await bee.get(
-          KEYWORDS_BY_USER_KEY(user.hash as string) + keywordHash,
-          { update: false }
-        );
+      keywords.map(async (keyword) => {
+        const keywordHash = sha256(keyword.label);
+        const keywordKey =
+          KEYWORDS_BY_USER_KEY(user.hash as string) + keywordHash;
+
+        const value = await bee.get(keywordKey, { update: false });
 
         let records = value?.value?.records;
 
@@ -65,10 +73,7 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
           records = [hash];
         }
 
-        await batch.put(
-          KEYWORDS_BY_USER_KEY(user.hash as string) + keywordHash,
-          { keyword, records }
-        );
+        await batch.put(keywordKey, { keyword, records });
       })
     );
   }
