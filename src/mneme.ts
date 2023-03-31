@@ -181,8 +181,16 @@ class Mneme {
     yield* this.recordUseCase.myKeywords();
   }
 
+  async *myKeywordsByLabel(text: string) {
+    yield* this.recordUseCase.myKeywordsByLabel(text);
+  }
+
   async *myTags() {
     yield* this.recordUseCase.myTags();
+  }
+
+  async *myTagsByLabel(text: string) {
+    yield* this.recordUseCase.myTagsByLabel(text);
   }
 
   async *myRecordsForKeyword(keyword: string) {

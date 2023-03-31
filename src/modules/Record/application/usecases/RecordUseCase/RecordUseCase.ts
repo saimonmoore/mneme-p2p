@@ -1,5 +1,6 @@
 import Autobase from 'autobase';
 import Hyperbee from 'hyperbee';
+import camelcase from 'camelcase';
 
 import { Validator } from 'jsonschema';
 
@@ -9,6 +10,8 @@ import {
   RECORDS_BY_USER_KEY,
   TAGS_BY_USER_KEY,
   KEYWORDS_BY_USER_KEY,
+  MY_TAGS_BY_LABEL_KEY,
+  MY_KEYWORDS_BY_LABEL_KEY,
 } from '#Record/application/indices/Records/records.index.js';
 import { RecordEntity } from '#Record/domain/entities/record.js';
 import { KeywordEntity } from '#Record/domain/entities/keyword.js';
@@ -72,6 +75,26 @@ class RecordUseCase {
     }
   }
 
+  async *myKeywordsByLabel(text: string) {
+    const currentUserHash = this.session.currentUser?.hash;
+
+    // @ts-ignore
+    for await (const data of this.bee.createReadStream({
+      gte:
+        MY_KEYWORDS_BY_LABEL_KEY(currentUserHash as string) + camelcase(text),
+      lt:
+        MY_KEYWORDS_BY_LABEL_KEY(currentUserHash as string) +
+        camelcase(text) +
+        '~',
+      limit: 10,
+    })) {
+      yield KeywordEntity.create({
+        ...data.value.keyword,
+        records: data.value.records,
+      });
+    }
+  }
+
   async *myRecordsForKeyword(keyword: string) {
     const keywordHash = sha256(keyword);
     const currentUserHash = this.session.currentUser?.hash;
@@ -86,19 +109,7 @@ class RecordUseCase {
       return;
     }
 
-    const records = result.value.records;
-
-    for (const hash of records) {
-      const entry = await this.bee.get(
-        RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
-        { update: false }
-      );
-
-      const record = RecordEntity.create(entry.value.record);
-      await this.findAndSetCreator(record);
-
-      yield record;
-    }
+    yield* this.findRecords(result.value.records);
   }
 
   async *myTags() {
@@ -108,6 +119,23 @@ class RecordUseCase {
     for await (const data of this.bee.createReadStream({
       gt: TAGS_BY_USER_KEY(currentUserHash as string),
       lt: `${TAGS_BY_USER_KEY(currentUserHash as string)}~`,
+    })) {
+      yield TagEntity.create({
+        ...data.value.tag,
+        records: data.value.records,
+      });
+    }
+  }
+
+  async *myTagsByLabel(text: string) {
+    const currentUserHash = this.session.currentUser?.hash;
+
+    // @ts-ignore
+    for await (const data of this.bee.createReadStream({
+      gte: MY_TAGS_BY_LABEL_KEY(currentUserHash as string) + camelcase(text),
+      lt:
+        MY_TAGS_BY_LABEL_KEY(currentUserHash as string) + camelcase(text) + '~',
+      limit: 10,
     })) {
       yield TagEntity.create({
         ...data.value.tag,
@@ -130,18 +158,7 @@ class RecordUseCase {
       return;
     }
 
-    const records = result.value.records;
-
-    for (const hash of records) {
-      const entry = await this.bee.get(
-        RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
-        { update: false }
-      );
-      const record = RecordEntity.create(entry.value.record);
-      await this.findAndSetCreator(record);
-
-      yield record;
-    }
+    yield* this.findRecords(result.value.records);
   }
 
   async addRecord(data: MnemeRecord) {
@@ -179,6 +196,22 @@ class RecordUseCase {
     }
 
     record.setCreator(result.value.user);
+  }
+
+  private async *findRecords(records: MnemeRecord[]) {
+    const currentUserHash = this.session.currentUser?.hash;
+
+    for (const hash of records) {
+      const entry = await this.bee.get(
+        RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
+        { update: false }
+      );
+
+      const record = RecordEntity.create(entry.value.record);
+      await this.findAndSetCreator(record);
+
+      yield record;
+    }
   }
 }
 

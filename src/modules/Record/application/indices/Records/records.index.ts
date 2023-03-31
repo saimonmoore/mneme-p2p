@@ -1,5 +1,6 @@
 import Hyperbee from 'hyperbee';
 
+import camelcase from 'camelcase';
 import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
 
 import type {
@@ -11,13 +12,20 @@ import type { BeeBatch } from '#Types/global.d.ts';
 
 export const RECORDS_KEY = 'org.mneme.records!';
 export const TAGS_KEY = 'org.mneme.tags';
+export const TAGS_BY_LABEL_KEY = 'org.mneme.tagsByLabel';
 export const KEYWORDS_KEY = 'org.mneme.keywords';
+export const KEYWORDS_BY_LABEL_KEY = 'org.mneme.keywordsByLabel';
+
 export const RECORDS_BY_USER_KEY = (userHash: string) =>
   `${userHash}!${RECORDS_KEY}!`;
 export const TAGS_BY_USER_KEY = (userHash: string) =>
   `${userHash}!${TAGS_KEY}!`;
 export const KEYWORDS_BY_USER_KEY = (userHash: string) =>
   `${userHash}!${KEYWORDS_KEY}!`;
+export const MY_KEYWORDS_BY_LABEL_KEY = (userHash: string) =>
+  `${userHash}!${KEYWORDS_BY_LABEL_KEY}!`;
+export const MY_TAGS_BY_LABEL_KEY = (userHash: string) =>
+  `${userHash}!${TAGS_BY_LABEL_KEY}!`;
 
 type RecordOperation = {
   hash: string;
@@ -31,6 +39,8 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
       tags.map(async (tag) => {
         const tagHash = sha256(tag.label);
         const tagsKey = TAGS_BY_USER_KEY(user.hash as string) + tagHash;
+        const myTagsByLabelKey =
+          MY_TAGS_BY_LABEL_KEY(user.hash as string) + camelcase(tag.label);
 
         const value = await bee.get(tagsKey, { update: false });
 
@@ -43,6 +53,11 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
         }
 
         await batch.put(tagsKey, {
+          tag,
+          records,
+        });
+
+        await batch.put(myTagsByLabelKey, {
           tag,
           records,
         });
@@ -60,6 +75,9 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
         const keywordHash = sha256(keyword.label);
         const keywordKey =
           KEYWORDS_BY_USER_KEY(user.hash as string) + keywordHash;
+        const myKeywordsByLabelKey =
+          MY_KEYWORDS_BY_LABEL_KEY(user.hash as string) +
+          camelcase(keyword.label);
 
         const value = await bee.get(keywordKey, { update: false });
 
@@ -72,6 +90,7 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
         }
 
         await batch.put(keywordKey, { keyword, records });
+        await batch.put(myKeywordsByLabelKey, { keyword, records });
       })
     );
   }
