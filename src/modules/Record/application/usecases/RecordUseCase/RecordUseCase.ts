@@ -16,6 +16,7 @@ import {
 import { RecordEntity } from '#Record/domain/entities/record.js';
 import { KeywordEntity } from '#Record/domain/entities/keyword.js';
 import { TagEntity } from '#Record/domain/entities/tag.js';
+import { logger } from '#infrastructure/logging/index.js';
 import schema from '#Record/domain/entities/record.schema.json' assert { type: 'json' };
 
 import type { MnemeRecord } from '#Record/domain/entities/record.js';
@@ -53,7 +54,6 @@ class RecordUseCase {
       gt: RECORDS_BY_USER_KEY(currentUserHash as string),
       lt: `${RECORDS_BY_USER_KEY(currentUserHash as string)}~`,
     })) {
-      console.log('*myRecords ===> ', { data: data.value.record });
       const record = RecordEntity.create(data.value.record as MnemeRecord);
 
       await this.findAndSetCreator(record);
@@ -110,7 +110,7 @@ class RecordUseCase {
     );
 
     if (!result) {
-      console.log('No records found for keyword: ' + keyword);
+      logger.info('No records found for keyword: ' + keyword);
       return;
     }
 
@@ -162,7 +162,7 @@ class RecordUseCase {
     );
 
     if (!result) {
-      console.log('No records found for tag: ' + tag);
+      logger.info('No records found for tag: ' + tag);
       return;
     }
 
@@ -174,16 +174,16 @@ class RecordUseCase {
     const validation = validateRecord(data);
 
     if (!validation.valid) {
-      console.error('Unable to create! Invalid record');
+      logger.error('Unable to create! Invalid record');
       return { error: validation.errors };
     }
 
     if (!this.session.currentUser) {
-      console.error('Unable to create! No user logged in');
+      logger.error('Unable to create! No user logged in');
       return { error: 'No user logged in' };
     }
 
-    console.log('Created record: ' + data);
+    logger.info('Created record: ' + data);
 
     return await this.autobase.append(
       JSON.stringify({
@@ -200,7 +200,7 @@ class RecordUseCase {
     });
 
     if (!result) {
-      console.log('No creator found for record: ' + record.creatorHash);
+      logger.info('No creator found for record: ' + record.creatorHash);
       return;
     }
 

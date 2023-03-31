@@ -2,6 +2,7 @@ import camelcase from 'camelcase';
 import type { BeeBatch } from '#Types/global.d.ts';
 
 import { User } from '#User/domain/entities/user.js';
+import { logger } from '#infrastructure/logging/index.js';
 
 export const USERS_KEY = 'org.mneme.users!';
 export const FRIENDS_KEY = (userHash: string) =>
@@ -27,7 +28,7 @@ export async function indexFriends(batch: BeeBatch, operation: UserOperation) {
   const { hash, friend, user } = operation;
 
   if (!friend) {
-    console.error('friend is undefined');
+    logger.error('friend is undefined');
     return;
   }
 

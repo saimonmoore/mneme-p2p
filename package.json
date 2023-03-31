@@ -34,6 +34,7 @@
   },
   "imports": {
     "#config/*": "./dist/config/*",
+    "#infrastructure/*": "./dist/infrastructure/*",
     "#Types/*": "./dist/@types/*",
     "#Record/*": "./dist/modules/Record/*",
     "#Session/*": "./dist/modules/Session/*",

@@ -2,6 +2,7 @@ import Hyperbee from 'hyperbee';
 
 import camelcase from 'camelcase';
 import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
+import { logger } from '#infrastructure/logging/index.js';
 
 import type {
   MnemeRecord,
@@ -99,7 +100,7 @@ export function indexRecords(batch: BeeBatch, bee: Hyperbee) {
     const { record, user } = operation;
 
     if (!user) {
-      console.error('user is undefined');
+      logger.error('user is undefined');
       return;
     }
 

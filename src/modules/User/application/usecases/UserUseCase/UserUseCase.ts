@@ -14,6 +14,7 @@ import {
 import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
 import { sessionRequired } from '#Session/application/decorators/sessionRequired.js';
 import { UserEntity } from '#User/domain/entities/user.js';
+import { logger } from '#infrastructure/logging/index.js';
 
 import type { User } from '#User/domain/entities/user.js';
 
@@ -101,12 +102,12 @@ class UserUseCase {
   async signup(user: User) {
     const hash = sha256(user.email);
 
-    console.debug(`Signing up with: ${user.email}`);
+    logger.info(`Signing up with: ${user.email}`);
 
     const value = await this.bee.get(USERS_KEY + hash);
 
     if (value) {
-      console.log(`User already exists with "${user.email}".`);
+      logger.info(`User already exists with "${user.email}".`);
       return;
     }
 
@@ -122,7 +123,7 @@ class UserUseCase {
 
     this.session.directLogin(loggedInUser);
 
-    console.log(`Created user for "${loggedInUser.email}".`);
+    logger.info(`Created user for "${loggedInUser.email}".`);
   }
 
   @sessionRequired
@@ -130,7 +131,7 @@ class UserUseCase {
     const entry = await this.bee.get(USERS_KEY + hash);
 
     if (!entry) {
-      console.log(`User does not exist with "${hash}".`);
+      logger.info(`User does not exist with "${hash}".`);
       return;
     }
 
@@ -145,7 +146,7 @@ class UserUseCase {
       })
     );
 
-    console.log(`Added user "${friend.email}" as your friend.`);
+    logger.info(`Added user "${friend.email}" as your friend.`);
   }
 }
 

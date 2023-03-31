@@ -12,6 +12,7 @@ import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/ind
 import { sessionRequiredInterceptor } from '#Session/application/usecases/SessionRequiredUseCase/SessionRequiredInterceptor.js';
 import { RecordUseCase } from '#Record/application/usecases/RecordUseCase/index.js';
 import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
+import { logger } from '#infrastructure/logging/index.js';
 
 import {
   indexFriends,
@@ -57,12 +58,12 @@ class Mneme {
   }
 
   async start() {
-    console.debug('Starting Mneme...');
+    logger.info('Starting Mneme...');
     const writer = this.store.get({ name: 'writer' });
     const viewOutput = this.store.get({ name: 'view' });
 
     await writer.ready();
-    console.debug('Writer ready');
+    logger.debug('Writer ready');
 
     // @ts-ignore
     this.autobase = new Autobase({
@@ -73,7 +74,7 @@ class Mneme {
     });
 
     await this.autobase.ready();
-    console.debug('Autobase ready');
+    logger.debug('Autobase ready');
 
     const manager = new AutobaseManager(
       this.autobase,
@@ -82,19 +83,19 @@ class Mneme {
       this.store.storage
     );
     await manager.ready();
-    console.debug('Autobase manager ready');
+    logger.debug('Autobase manager ready');
 
     if (args.swarm) {
       const topic = Buffer.from(sha256(SWARM_TOPIC), 'hex');
-      console.debug('Starting to swarm...');
+      logger.debug('Starting to swarm...');
 
       this.swarm = new Hyperswarm();
       this.swarm.on(
         'connection',
         (socket: HypercoreStream, peerInfo: PeerInfo) => {
           // @ts-ignore
-          console.log(
-            'info: Peer connected! ======> ',
+          logger.info(
+            'Peer connected! ======> ',
             peerInfo.publicKey.toString('hex')
           );
           const stream = this.store.replicate(socket);
@@ -103,9 +104,9 @@ class Mneme {
         }
       );
       this.swarm.join(topic);
-      console.debug('Joining swarm topic: ' + SWARM_TOPIC);
+      logger.debug('Joining swarm topic: ' + SWARM_TOPIC);
       await this.swarm.flush();
-      console.debug('Swarm ready');
+      logger.debug('Swarm ready');
       // @ts-ignore
       process.once('SIGINT', () => this.swarm.destroy()); // for faster restarts
     }
@@ -156,15 +157,15 @@ class Mneme {
     this.recordUseCase = sessionRequiredInterceptor(
       new RecordUseCase(this.bee, this.autobase, this.sessionUseCase)
     );
-    console.debug('Mneme ready');
+    logger.debug('Mneme ready');
   }
 
   info() {
-    console.log('hrepl mneme.js ');
-    console.log();
-    console.log('To use another storage directory use --storage ./another');
-    console.log('To disable swarming add --no-swarm');
-    console.log();
+    logger.info('hrepl mneme.js ');
+    logger.info();
+    logger.info('To use another storage directory use --storage ./another');
+    logger.info('To disable swarming add --no-swarm');
+    logger.info();
   }
 
   // ENDPOINTS

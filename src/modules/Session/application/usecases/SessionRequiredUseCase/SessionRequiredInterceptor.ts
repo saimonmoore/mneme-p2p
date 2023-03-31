@@ -1,3 +1,5 @@
+import { logger } from '#infrastructure/logging/index.js';
+
 export function sessionRequiredInterceptor(object: any) {
   const handler = {
     get(target: any, propKey: string, receiver: any) {
@@ -26,7 +28,7 @@ export function sessionRequiredInterceptor(object: any) {
       }
 
       if (!origMethod) {
-        console.error('Method not found ', { target, propKey, receiver });
+        logger.error('Method not found ', { target, propKey, receiver });
         return;
       }
 
