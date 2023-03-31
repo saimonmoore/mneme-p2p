@@ -1,5 +1,7 @@
 import { sha256 } from '#Shared/infrastructure/helpers/hash.js';
-import { User } from '#User/domain/entities/user.js';
+import { UserEntity } from '#User/domain/entities/user.js';
+
+import type { User } from '#User/domain/entities/user.js';
 
 export type MnemeTopic = {
   label: string;
@@ -37,6 +39,7 @@ export class RecordEntity {
   createdAt: Date;
   updatedAt: Date;
   creatorHash: string;
+  creator: UserEntity;
 
   static create(record: MnemeRecord) {
     return new RecordEntity(record);
@@ -67,7 +70,7 @@ export class RecordEntity {
     }
   }
 
-  set creator(user: User) {
-    this.creator = user;
+  setCreator(user: User) {
+    this.creator = UserEntity.create(user);
   }
 }

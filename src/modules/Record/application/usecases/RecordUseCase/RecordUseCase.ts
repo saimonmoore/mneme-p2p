@@ -17,6 +17,7 @@ import schema from '#Record/domain/entities/record.schema.json' assert { type: '
 
 import type { MnemeRecord } from '#Record/domain/entities/record.js';
 import { SessionUseCase } from '#Session/application/usecases/SessionUseCase/SessionUseCase.js';
+import { USERS_KEY } from '#User/application/indices/Users/users.index.js';
 
 function validateRecord(record: MnemeRecord) {
   const validator = new Validator();
@@ -47,7 +48,12 @@ class RecordUseCase {
       gt: RECORDS_BY_USER_KEY(currentUserHash as string),
       lt: `${RECORDS_BY_USER_KEY(currentUserHash as string)}~`,
     })) {
-      yield RecordEntity.create(data.value as MnemeRecord);
+      console.log('*myRecords ===> ', { data: data.value.record });
+      const record = RecordEntity.create(data.value.record as MnemeRecord);
+
+      await this.findAndSetCreator(record);
+
+      yield record;
     }
   }
 
@@ -87,7 +93,11 @@ class RecordUseCase {
         RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
         { update: false }
       );
-      yield RecordEntity.create(entry.value.record);
+
+      const record = RecordEntity.create(entry.value.record);
+      await this.findAndSetCreator(record);
+
+      yield record;
     }
   }
 
@@ -127,7 +137,10 @@ class RecordUseCase {
         RECORDS_BY_USER_KEY(currentUserHash as string) + hash,
         { update: false }
       );
-      yield RecordEntity.create(entry.value.record);
+      const record = RecordEntity.create(entry.value.record);
+      await this.findAndSetCreator(record);
+
+      yield record;
     }
   }
 
@@ -153,6 +166,19 @@ class RecordUseCase {
         user: this.session.currentUser,
       })
     );
+  }
+
+  private async findAndSetCreator(record: RecordEntity) {
+    const result = await this.bee.get(USERS_KEY + record.creatorHash, {
+      update: false,
+    });
+
+    if (!result) {
+      console.log('No creator found for record: ' + record.creatorHash);
+      return;
+    }
+
+    record.setCreator(result.value.user);
   }
 }
 
