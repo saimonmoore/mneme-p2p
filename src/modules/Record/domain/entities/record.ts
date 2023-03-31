@@ -4,6 +4,7 @@ import { User } from '#User/domain/entities/user.js';
 export type MnemeTopic = {
   label: string;
   wikiLink: string;
+  records?: MnemeRecord[];
 };
 
 export enum MnemeRecordType {
