@@ -36,6 +36,7 @@
     "#config/*": "./dist/config/*",
     "#infrastructure/*": "./dist/infrastructure/*",
     "#Types/*": "./dist/@types/*",
+    "#Analysis/*": "./dist/modules/Analysis/*",
     "#Record/*": "./dist/modules/Record/*",
     "#Session/*": "./dist/modules/Session/*",
     "#Shared/*": "./dist/modules/Shared/*",

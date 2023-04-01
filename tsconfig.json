@@ -30,6 +30,9 @@
       "#config/*": [
         "./config/*"
       ],
+      "#Analysis/*": [
+        "./modules/Analysis/*"
+      ],
       "#Record/*": [
         "./modules/Record/*"
       ],
