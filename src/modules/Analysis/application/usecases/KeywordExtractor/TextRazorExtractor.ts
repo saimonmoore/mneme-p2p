@@ -1,6 +1,7 @@
 import { MnemeTopic } from '#Record/domain/entities/record.js';
 import { logger } from '#infrastructure/logging/index.js';
 import { request } from '#infrastructure/http/index.js';
+import { TEXTRAZOR_API_KEY } from '#config/constants.js';
 
 type TextRazorHeaders = {
   'Content-Type': string;
@@ -56,11 +57,12 @@ const removeDuplicateLabels = (arr: MnemeTopic[]) => {
   });
 };
 
-export async function analyzeURLForKeywords(
-  url: string,
-  numOfKeywords: number
+export async function analyzeURLOrTextForKeywords(
+  url?: string,
+  text?: string,
+  numOfKeywords = 10
 ) {
-  const apiKey: string | undefined = process.env.TEXTRAZOR_API_KEY;
+  const apiKey: string | undefined = TEXTRAZOR_API_KEY;
 
   if (!apiKey) {
     logger.error('Please provide a TextRazor API key');
@@ -75,12 +77,24 @@ export async function analyzeURLForKeywords(
     headers['x-textrazor-key'] = apiKey || 'secret';
   }
 
+  let body = '';
+
+  if (url && url.length) {
+    body = `url=${encodeURIComponent(url)}`;
+  }
+
+  if (text && text.length) {
+    body = `text=${encodeURIComponent(text)}`;
+  }
+
+  body += `&extractors=entities,topics`;
+
   const response = await request<TextRazorResponse>(
     'https://api.textrazor.com',
     {
       method: 'POST',
       headers,
-      body: `url=${encodeURIComponent(url)}&extractors=entities,topics`,
+      body,
     }
   );
 

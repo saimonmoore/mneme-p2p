@@ -1,6 +1,6 @@
 import { DEFAULT_NUMBER_OF_KEYWORDS } from '#config/constants.js';
 import { logger } from '#infrastructure/logging/index.js';
-import { analyzeURLForKeywords } from '#Analysis/application/usecases/KeywordExtractor/TextRazorExtractor.js';
+import { analyzeURLOrTextForKeywords } from '#Analysis/application/usecases/KeywordExtractor/TextRazorExtractor.js';
 import { MnemeTopic } from '#Record/domain/entities/record.js';
 import { FetchResponse } from '#infrastructure/http/request.js';
 
@@ -13,16 +13,21 @@ type MnemeKeywords = {
   language: MnemeLanguage;
 };
 
-export async function extractKeywordsForUrl(
-  url: string,
+export async function extractKeywordsForTextOrUrl(
+  url?: string,
+  text?: string,
   numOfKeywords = DEFAULT_NUMBER_OF_KEYWORDS
 ): Promise<MnemeKeywords | FetchResponse<unknown>> {
-  if (!url) {
-    logger.error('Please provide a url as an argument');
-    return { error: 'Please provide a url as an argument' };
+  if (!url && !text) {
+    logger.error('Please provide either a url or some text as an argument');
+    return { error: 'Please provide either a url or some text as an argument' };
   }
 
   if (!numOfKeywords) numOfKeywords = DEFAULT_NUMBER_OF_KEYWORDS;
 
-  return (await analyzeURLForKeywords(url, numOfKeywords)) as MnemeKeywords;
+  return (await analyzeURLOrTextForKeywords(
+    url,
+    text,
+    numOfKeywords
+  )) as MnemeKeywords;
 }
